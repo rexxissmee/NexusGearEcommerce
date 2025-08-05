@@ -211,23 +211,17 @@ export default function CartPage() {
               </div>
             </div>
 
-            <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white">Proceed to Checkout</Button>
+            <Link href="/checkout" passHref legacyBehavior>
+              <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white">Proceed to Checkout</Button>
+            </Link>
 
             <div className="mt-6 text-xs text-gray-500 text-center">
               <p className="mb-2">We accept the following payment methods</p>
               <div className="flex justify-center space-x-2">
-                <div className="w-8 h-5 bg-gradient-to-r from-blue-600 to-blue-700 rounded text-white text-[8px] flex items-center justify-center font-bold">
-                  VISA
-                </div>
-                <div className="w-8 h-5 bg-gradient-to-r from-red-600 to-orange-600 rounded text-white text-[8px] flex items-center justify-center font-bold">
-                  MC
-                </div>
-                <div className="w-8 h-5 bg-gradient-to-r from-blue-500 to-blue-600 rounded text-white text-[8px] flex items-center justify-center font-bold">
-                  AMEX
-                </div>
-                <div className="w-8 h-5 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded text-white text-[8px] flex items-center justify-center font-bold">
-                  PP
-                </div>
+                <img src="/images/visa.svg" alt="Visa" className="w-8 h-5 rounded shadow" />
+                <img src="/images/mastercard.svg" alt="Mastercard" className="w-8 h-5 rounded shadow" />
+                <img src="/images/jcb.svg" alt="JCB" className="w-8 h-5 rounded shadow" />
+                <img src="/images/napas.svg" alt="Napas" className="w-8 h-5 rounded shadow" />
               </div>
             </div>
           </div>

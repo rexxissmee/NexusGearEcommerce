@@ -1,12 +1,11 @@
 "use client"
 
-// LoginButton component
 import React from "react";
 import { useAuthStore } from "@/store/auth-store";
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 
-function LoginButton({ loading, onError }: { loading: boolean, onError: (err: any) => void }) {
+function LoginButton({ loading, onError, btnId }: { loading: boolean, onError: (err: any) => void, btnId?: string }) {
   const [btnLoading, setBtnLoading] = React.useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -51,9 +50,19 @@ function LoginButton({ loading, onError }: { loading: boolean, onError: (err: an
         localStorage.setItem('user', JSON.stringify(data.user));
         login({
           id: data.user.id,
-          name: data.user.first_name + (data.user.last_name ? ' ' + data.user.last_name : ''),
+          first_name: data.user.first_name ?? null,
+          last_name: data.user.last_name ?? null,
           email: data.user.email,
+          phone: data.user.phone ?? null,
+          date_of_birth: data.user.date_of_birth ?? null,
+          gender: data.user.gender ?? null,
           role: data.user.role,
+          address_street: data.user.address_street ?? null,
+          address_ward: data.user.address_ward ?? null,
+          address_city: data.user.address_city ?? null,
+          address_country: data.user.address_country ?? null,
+          created_at: data.user.created_at ?? null,
+          updated_at: data.user.updated_at ?? null,
         });
         toast({
           title: "Login Successful",
@@ -67,7 +76,7 @@ function LoginButton({ loading, onError }: { loading: boolean, onError: (err: an
           } else {
             router.push("/");
           }
-        }, 1200);
+        }, 800);
       }
     } catch (err) {
       toast({
@@ -83,6 +92,7 @@ function LoginButton({ loading, onError }: { loading: boolean, onError: (err: an
 
   return (
     <Button
+      id={btnId}
       className="w-full h-9 md:h-10 gradient-btn-light dark:gradient-btn-dark text-white text-sm md:text-base"
       onClick={handleLogin}
       disabled={btnLoading || loading}
@@ -108,7 +118,7 @@ export default function AuthPage() {
   const [registerSuccess, setRegisterSuccess] = useState<string | null>(null)
 
   // RegisterButton component
-  function RegisterButton({ loading, onError, onSuccess }: { loading: boolean, onError: (err: any) => void, onSuccess: (msg: string) => void }) {
+  function RegisterButton({ loading, onError, onSuccess, btnId }: { loading: boolean, onError: (err: any) => void, onSuccess: (msg: string) => void, btnId?: string }) {
     const [btnLoading, setBtnLoading] = useState(false);
     const { toast } = useToast();
 
@@ -190,6 +200,7 @@ export default function AuthPage() {
 
     return (
       <Button
+        id={btnId}
         className="w-full h-9 md:h-10 gradient-btn-light dark:gradient-btn-dark text-white text-sm md:text-base"
         onClick={handleRegister}
         disabled={btnLoading || loading}
@@ -221,7 +232,14 @@ export default function AuthPage() {
                   <Label htmlFor="loginEmail" className="text-sm">
                     Email
                   </Label>
-                  <Input id="loginEmail" type="email" placeholder="name@example.com" className="h-9 md:h-10" />
+                  <Input id="loginEmail" type="email" placeholder="name@example.com" className="h-9 md:h-10" tabIndex={1}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        document.getElementById('loginPassword')?.focus();
+                        e.preventDefault();
+                      }
+                    }}
+                  />
                 </div>
                 <div className="space-y-1.5 md:space-y-2">
                   <Label htmlFor="loginPassword" className="text-sm">
@@ -233,6 +251,13 @@ export default function AuthPage() {
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       className="h-9 md:h-10 pr-10"
+                      tabIndex={2}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          document.getElementById('loginBtn')?.click();
+                          e.preventDefault();
+                        }
+                      }}
                     />
                     <Button
                       variant="ghost"
@@ -267,7 +292,7 @@ export default function AuthPage() {
               </CardContent>
               <CardFooter className="px-4 md:px-6 pb-4 md:pb-6">
                 <div className="space-y-3 w-full">
-                  <LoginButton loading={false} onError={() => {}} />
+                  <LoginButton loading={false} onError={() => {}} btnId="loginBtn" />
 
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
@@ -320,26 +345,54 @@ export default function AuthPage() {
                     <Label htmlFor="firstName" className="text-sm">
                       First name
                     </Label>
-                    <Input id="firstName" placeholder="John" className="h-9 md:h-10" />
+                    <Input id="firstName" placeholder="John" className="h-9 md:h-10" tabIndex={3}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          document.getElementById('lastName')?.focus();
+                          e.preventDefault();
+                        }
+                      }}
+                    />
                   </div>
                   <div className="space-y-1.5 md:space-y-2">
                     <Label htmlFor="lastName" className="text-sm">
                       Last name <span className="text-muted-foreground">(optional)</span>
                     </Label>
-                    <Input id="lastName" placeholder="Doe" className="h-9 md:h-10" />
+                    <Input id="lastName" placeholder="Doe" className="h-9 md:h-10" tabIndex={4}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          document.getElementById('email')?.focus();
+                          e.preventDefault();
+                        }
+                      }}
+                    />
                   </div>
                 </div>
                 <div className="space-y-1.5 md:space-y-2">
                   <Label htmlFor="email" className="text-sm">
                     Email
                   </Label>
-                  <Input id="email" type="email" placeholder="name@example.com" className="h-9 md:h-10" />
+                  <Input id="email" type="email" placeholder="name@example.com" className="h-9 md:h-10" tabIndex={5}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        document.getElementById('phone')?.focus();
+                        e.preventDefault();
+                      }
+                    }}
+                  />
                 </div>
                 <div className="space-y-1.5 md:space-y-2">
                   <Label htmlFor="phone" className="text-sm">
                     Phone Number
                   </Label>
-                  <Input id="phone" type="tel" placeholder="+1 (555) 123-4567" className="h-9 md:h-10" />
+                  <Input id="phone" type="tel" placeholder="+1 (555) 123-4567" className="h-9 md:h-10" tabIndex={6}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        document.getElementById('newPassword')?.focus();
+                        e.preventDefault();
+                      }
+                    }}
+                  />
                 </div>
                 <div className="space-y-1.5 md:space-y-2">
                   <Label htmlFor="newPassword" className="text-sm">
@@ -351,6 +404,13 @@ export default function AuthPage() {
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       className="h-9 md:h-10 pr-10"
+                      tabIndex={7}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          document.getElementById('confirmPassword')?.focus();
+                          e.preventDefault();
+                        }
+                      }}
                     />
                     <Button
                       variant="ghost"
@@ -371,7 +431,14 @@ export default function AuthPage() {
                   <Label htmlFor="confirmPassword" className="text-sm">
                     Confirm Password
                   </Label>
-                  <Input id="confirmPassword" type="password" placeholder="••••••••" className="h-9 md:h-10" />
+                  <Input id="confirmPassword" type="password" placeholder="••••••••" className="h-9 md:h-10" tabIndex={8}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        document.getElementById('registerBtn')?.click();
+                        e.preventDefault();
+                      }
+                    }}
+                  />
                 </div>
                 <div className="flex items-start space-x-2">
                   <input
@@ -398,6 +465,7 @@ export default function AuthPage() {
                     loading={registerLoading}
                     onError={setRegisterError}
                     onSuccess={setRegisterSuccess}
+                    btnId="registerBtn"
                   />
 
                   <div className="relative">

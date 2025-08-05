@@ -36,7 +36,7 @@ if ($errors) {
 }
 
 // Check user
-$stmt = $pdo->prepare('SELECT id, password, first_name, last_name, email, role FROM users WHERE email = ?');
+$stmt = $pdo->prepare('SELECT id, first_name, last_name, email, phone, date_of_birth, gender, role, address_street, address_ward, address_city, address_country, created_at, updated_at, password FROM users WHERE email = ?');
 $stmt->execute([$email]);
 $user = $stmt->fetch();
 if (!$user || !password_verify($password, $user['password'])) {
@@ -45,15 +45,10 @@ if (!$user || !password_verify($password, $user['password'])) {
     exit;
 }
 
-// Success
+unset($user['password']);
+
 echo json_encode([
     'success' => true,
     'message' => 'Login successful.',
-    'user' => [
-        'id' => $user['id'],
-        'first_name' => $user['first_name'],
-        'last_name' => $user['last_name'],
-        'email' => $user['email'],
-        'role' => $user['role'],
-    ]
+    'user' => $user
 ]);

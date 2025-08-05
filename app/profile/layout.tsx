@@ -7,6 +7,8 @@ import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { LayoutDashboard, Package, User, Edit, MapPin, Heart, LogOut, Menu } from "lucide-react"
+import { useAuthStore } from "@/store/auth-store"
+import { useToast } from "@/hooks/use-toast"
 
 const sidebarItems = [
   {
@@ -49,6 +51,8 @@ export default function ProfileLayout({
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
+  const logout = useAuthStore((state) => state.logout);
+  const { toast } = useToast();
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="p-6 border-b">
@@ -87,8 +91,17 @@ export default function ProfileLayout({
           variant="ghost"
           className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
           onClick={() => {
-            // Handle logout
-            window.location.href = "/auth"
+            logout();
+            toast({
+              title: "Logged out",
+              description: "You have been signed out successfully.",
+              variant: "default",
+              className: "bg-green-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4",
+              action: <LogOut className="inline-block mr-2 h-4 w-4 align-text-bottom" />
+            });
+            setTimeout(() => {
+              window.location.href = "/auth";
+            }, 800);
           }}
         >
           <LogOut className="h-4 w-4 mr-3" />

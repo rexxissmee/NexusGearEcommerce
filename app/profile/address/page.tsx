@@ -11,11 +11,10 @@ export default function SavedAddressPage() {
       id: 1,
       type: "Home",
       name: "John Doe",
-      address: "123 Gaming Street",
-      city: "New York",
-      state: "NY",
-      zipCode: "10001",
-      country: "United States",
+      address_street: "123 Gaming Street",
+      address_ward: "Ward 1",
+      address_city: "New York",
+      address_country: "United States",
       phone: "+1 (555) 123-4567",
       isDefault: true,
     },
@@ -23,11 +22,10 @@ export default function SavedAddressPage() {
       id: 2,
       type: "Work",
       name: "John Doe",
-      address: "456 Tech Avenue",
-      city: "New York",
-      state: "NY",
-      zipCode: "10002",
-      country: "United States",
+      address_street: "456 Tech Avenue",
+      address_ward: "Ward 5",
+      address_city: "New York",
+      address_country: "United States",
       phone: "+1 (555) 123-4567",
       isDefault: false,
     },
@@ -35,11 +33,10 @@ export default function SavedAddressPage() {
       id: 3,
       type: "Other",
       name: "John Doe",
-      address: "789 Gaming Plaza",
-      city: "Los Angeles",
-      state: "CA",
-      zipCode: "90210",
-      country: "United States",
+      address_street: "789 Gaming Plaza",
+      address_ward: "Ward 3",
+      address_city: "Los Angeles",
+      address_country: "United States",
       phone: "+1 (555) 987-6543",
       isDefault: false,
     },
@@ -79,11 +76,13 @@ export default function SavedAddressPage() {
               </div>
 
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                <p>{address.address}</p>
+                <p>{address.address_street}</p>
+                <p>{address.address_ward}</p>
                 <p>
-                  {address.city}, {address.state} {address.zipCode}
+                  {address.address_city}
+                  {address.address_city && address.address_country ? ', ' : ''}
+                  {address.address_country}
                 </p>
-                <p>{address.country}</p>
               </div>
 
               <div className="flex space-x-2 pt-3 border-t">

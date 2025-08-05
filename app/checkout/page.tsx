@@ -359,10 +359,10 @@ export default function CheckoutPage() {
                 <div className="mt-6 text-xs text-gray-500 text-center">
                   <p className="mb-2">Secure checkout powered by SSL encryption</p>
                   <div className="flex justify-center space-x-2">
-                    <div className="w-8 h-5 bg-gray-200 rounded"></div>
-                    <div className="w-8 h-5 bg-gray-200 rounded"></div>
-                    <div className="w-8 h-5 bg-gray-200 rounded"></div>
-                    <div className="w-8 h-5 bg-gray-200 rounded"></div>
+                    <img src="/images/visa.svg" alt="Visa" className="w-8 h-5 rounded shadow" />
+                    <img src="/images/mastercard.svg" alt="Mastercard" className="w-8 h-5 rounded shadow" />
+                    <img src="/images/jcb.svg" alt="JCB" className="w-8 h-5 rounded shadow" />
+                    <img src="/images/napas.svg" alt="Napas" className="w-8 h-5 rounded shadow" />
                   </div>
                 </div>
               </CardContent>
