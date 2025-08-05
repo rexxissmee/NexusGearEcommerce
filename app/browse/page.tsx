@@ -23,7 +23,7 @@ export default function BrowsePage() {
   const [showNewArrivals, setShowNewArrivals] = useState(false)
   const [showSale, setShowSale] = useState(false)
 
-  // Initialize filters from URL parameters
+  // Unified handler for special filters and categories from URL
   useEffect(() => {
     const category = searchParams.get("category")
     const featured = searchParams.get("featured")
@@ -33,15 +33,9 @@ export default function BrowsePage() {
     if (category) {
       setSelectedCategories([category])
     }
-    if (featured === "true") {
-      setShowFeatured(true)
-    }
-    if (newArrival === "true") {
-      setShowNewArrivals(true)
-    }
-    if (sale === "true") {
-      setShowSale(true)
-    }
+    setShowFeatured(featured === "true")
+    setShowNewArrivals(newArrival === "true")
+    setShowSale(sale === "true")
   }, [searchParams])
 
   const filteredAndSortedProducts = useMemo(() => {
@@ -103,6 +97,18 @@ export default function BrowsePage() {
     (priceRange[0] > 0 || priceRange[1] < 1000 ? 1 : 0) +
     (minRating > 0 ? 1 : 0)
 
+  const specialFilters = [
+    { id: "featured", label: "Featured Products", checked: showFeatured, setter: setShowFeatured },
+    { id: "newArrivals", label: "New Arrivals", checked: showNewArrivals, setter: setShowNewArrivals },
+    { id: "sale", label: "On Sale", checked: showSale, setter: setShowSale },
+  ]
+
+  const handleSpecialFilterChange = (id: string, checked: boolean) => {
+    if (id === "featured") setShowFeatured(checked)
+    if (id === "newArrivals") setShowNewArrivals(checked)
+    if (id === "sale") setShowSale(checked)
+  }
+
   const FilterContent = () => (
     <div className="space-y-6">
       {/* Categories */}
@@ -131,24 +137,18 @@ export default function BrowsePage() {
       <div>
         <h3 className="font-semibold mb-3">Special</h3>
         <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <Checkbox id="featured" checked={showFeatured} onCheckedChange={setShowFeatured} />
-            <label htmlFor="featured" className="text-sm font-medium">
-              Featured Products
-            </label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox id="newArrivals" checked={showNewArrivals} onCheckedChange={setShowNewArrivals} />
-            <label htmlFor="newArrivals" className="text-sm font-medium">
-              New Arrivals
-            </label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox id="sale" checked={showSale} onCheckedChange={setShowSale} />
-            <label htmlFor="sale" className="text-sm font-medium">
-              On Sale
-            </label>
-          </div>
+          {specialFilters.map((filter) => (
+            <div key={filter.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={filter.id}
+                checked={filter.checked}
+                onCheckedChange={(checked) => handleSpecialFilterChange(filter.id, checked as boolean)}
+              />
+              <label htmlFor={filter.id} className="text-sm font-medium">
+                {filter.label}
+              </label>
+            </div>
+          ))}
         </div>
       </div>
 

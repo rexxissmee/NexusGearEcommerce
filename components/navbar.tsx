@@ -27,7 +27,7 @@ export default function Navbar() {
           if (user?.id && user?.name && user?.email) {
             login(user)
           }
-        } catch {}
+        } catch { }
       }
     }
   }, [login])
@@ -64,6 +64,11 @@ export default function Navbar() {
       title: "New Arrivals",
       href: "/browse?newArrival=true",
       description: "Latest gaming gear and newest product releases.",
+    },
+    {
+      title: "On Sale",
+      href: "/browse?sale=true",
+      description: "Discounted products and special offers.",
     },
   ]
 
@@ -144,7 +149,12 @@ export default function Navbar() {
         <NavigationMenu className="hidden md:flex">
           <NavigationMenuList>
             <NavigationMenuItem>
-              <NavigationMenuTrigger>Products</NavigationMenuTrigger>
+              <NavigationMenuTrigger
+                className="cursor-pointer select-none rounded-md px-3 py-2 font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                onClick={() => window.location.href = '/browse'}
+              >
+                Products
+              </NavigationMenuTrigger>
               <NavigationMenuContent>
                 <div className="grid w-[600px] gap-3 p-6 md:w-[700px] lg:w-[800px]">
                   <div className="grid grid-cols-2 gap-4">
