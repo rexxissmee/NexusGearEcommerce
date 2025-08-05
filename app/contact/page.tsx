@@ -45,7 +45,7 @@ export default function ContactPage() {
       {/* Hero Section */}
       <section className="relative">
         <div className="container px-4 py-8 md:py-16 lg:py-20 mx-auto flex items-center justify-center min-h-[320px]">
-          <div className="absolute inset-0 bg-[url('/banner.jpg')] bg-cover bg-center" />
+          <div className="absolute inset-0 bg-[url('/images/banner.jpg')] bg-cover bg-center" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/50" />
           <div className="relative z-10 max-w-4xl mx-auto text-center flex flex-col items-center justify-center w-full">
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 md:mb-6 bg-clip-text text-white drop-shadow-[0_4px_24px_rgba(255,255,255,0.5)] dark:drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]">

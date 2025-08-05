@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Shop the best gaming keyboards, mice, headsets and accessories for competitive gaming.",
     generator: 'v0.dev',
     icons: {
-      icon: "/nexus-logo.png",
+      icon: "/images/nexus-logo.png",
     },
 }
 

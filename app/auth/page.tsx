@@ -51,8 +51,9 @@ function LoginButton({ loading, onError }: { loading: boolean, onError: (err: an
         localStorage.setItem('user', JSON.stringify(data.user));
         login({
           id: data.user.id,
-          name: data.user.name,
+          name: data.user.first_name + (data.user.last_name ? ' ' + data.user.last_name : ''),
           email: data.user.email,
+          role: data.user.role,
         });
         toast({
           title: "Login Successful",
@@ -61,7 +62,11 @@ function LoginButton({ loading, onError }: { loading: boolean, onError: (err: an
           className: "bg-green-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4"
         });
         setTimeout(() => {
-          router.push("/");
+          if (data.user.role === 'admin') {
+            router.push("/admin");
+          } else {
+            router.push("/");
+          }
         }, 1200);
       }
     } catch (err) {

@@ -23,7 +23,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative">
         <div className="container px-4 py-8 md:py-16 lg:py-20 mx-auto flex items-center justify-center min-h-[320px]">
-          <div className="absolute inset-0 bg-[url('/new-collection.jpg')] opacity-50 bg-cover bg-center" />
+          <div className="absolute inset-0 bg-[url('/images/new-collection.jpg')] opacity-50 bg-cover bg-center" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/50" />
           <div className="relative z-10 max-w-4xl mx-auto text-center flex flex-col items-center justify-center w-full">
             <Badge className="mb-4 bg-blue-600 hover:bg-blue-700 text-white">New Collection</Badge>

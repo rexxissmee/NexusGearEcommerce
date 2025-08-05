@@ -36,7 +36,7 @@ if ($errors) {
 }
 
 // Check user
-$stmt = $pdo->prepare('SELECT id, password, first_name, last_name, email FROM users WHERE email = ?');
+$stmt = $pdo->prepare('SELECT id, password, first_name, last_name, email, role FROM users WHERE email = ?');
 $stmt->execute([$email]);
 $user = $stmt->fetch();
 if (!$user || !password_verify($password, $user['password'])) {
@@ -54,5 +54,6 @@ echo json_encode([
         'first_name' => $user['first_name'],
         'last_name' => $user['last_name'],
         'email' => $user['email'],
+        'role' => $user['role'],
     ]
 ]);
