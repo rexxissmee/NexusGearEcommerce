@@ -51,12 +51,15 @@ export default function ProfileLayout({
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
+  const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const { toast } = useToast();
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="p-6 border-b">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Hello, John</h2>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          Hello, {user?.first_name ? user.first_name : "User"}
+        </h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage your account settings</p>
       </div>
 
