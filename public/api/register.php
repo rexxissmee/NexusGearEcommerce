@@ -23,11 +23,13 @@ require_once '../../config/database.php';
 $data = json_decode(file_get_contents('php://input'), true);
 
 $firstName = trim($data['firstName'] ?? '');
+$lastName = trim($data['lastName'] ?? '');
 $email = trim($data['email'] ?? '');
 $phone = trim($data['phone'] ?? '');
 $password = $data['password'] ?? '';
 $confirmPassword = $data['confirmPassword'] ?? '';
 $agree = $data['agree'] ?? false;
+
 
 // Validate
 $errors = [];
@@ -57,9 +59,9 @@ if ($stmt->fetch()) {
 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
 // Insert user
-$stmt = $pdo->prepare('INSERT INTO users (first_name, email, phone, password) VALUES (?, ?, ?, ?)');
+$stmt = $pdo->prepare('INSERT INTO users (first_name, last_name, email, phone, password) VALUES (?, ?, ?, ?, ?)');
 try {
-    $stmt->execute([$firstName, $email, $phone, $hashedPassword]);
+    $stmt->execute([$firstName, $lastName, $email, $phone, $hashedPassword]);
     echo json_encode(['success' => true, 'message' => 'Registration successful.']);
 } catch (PDOException $e) {
     http_response_code(500);
