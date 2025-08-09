@@ -179,9 +179,8 @@ export default function AdminDashboard() {
                   <XAxis
                     dataKey="month"
                     stroke="#64748b"
-                    interval="preserveStartEnd"  // giữ tick đầu/cuối
-                    padding={{ right: 8 }}        // chừa khoảng bên phải
-                  // tickMargin={8}             // mở nếu chữ tick bị dính
+                    interval="preserveStartEnd"
+                    padding={{ right: 8 }}
                   />
                   <YAxis stroke="#64748b" />
                   <Tooltip
