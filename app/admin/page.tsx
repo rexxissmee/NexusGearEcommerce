@@ -113,9 +113,9 @@ const getStatusBadge = (status: string) => {
     pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
     cancelled: { color: 'bg-red-100 text-red-800', label: 'Cancelled' },
   }
-  
+
   const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
-  
+
   return (
     <Badge className={`${config.color} hover:${config.color}`}>
       {config.label}
@@ -137,7 +137,7 @@ export default function AdminDashboard() {
         {statsData.map((stat) => {
           const Icon = stat.icon
           const TrendIcon = stat.trend === 'up' ? TrendingUp : TrendingDown
-          
+
           return (
             <Card key={stat.title} className="border-0 shadow-sm">
               <CardContent className="p-6">
@@ -166,19 +166,25 @@ export default function AdminDashboard() {
       {/* Charts and Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue Chart */}
-        <Card className="border-0 shadow-sm">
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Monthly Revenue</CardTitle>
             <CardDescription>Revenue trends over the past 12 months</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="h-80">
+          <CardContent className="min-w-0">
+            <div className="h-80 min-w-0">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
+                <LineChart data={chartData} margin={{ top: 8, right: 24, left: 8, bottom: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="month" stroke="#64748b" />
+                  <XAxis
+                    dataKey="month"
+                    stroke="#64748b"
+                    interval="preserveStartEnd"  // giữ tick đầu/cuối
+                    padding={{ right: 8 }}        // chừa khoảng bên phải
+                  // tickMargin={8}             // mở nếu chữ tick bị dính
+                  />
                   <YAxis stroke="#64748b" />
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{
                       backgroundColor: 'white',
                       border: '1px solid #e2e8f0',
@@ -186,13 +192,13 @@ export default function AdminDashboard() {
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                     }}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="#3b82f6" 
+                  <Line
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#3b82f6"
                     strokeWidth={3}
-                    dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2 }}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
                   />
                 </LineChart>
               </ResponsiveContainer>

@@ -155,23 +155,6 @@ export default function CategoriesPage() {
         </Dialog>
       </div>
 
-      {/* Search and Filters */}
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input
-                placeholder="Search categories..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Categories Table */}
       <Card className="border-0 shadow-sm">
         <CardHeader>

@@ -63,10 +63,9 @@ function BackToTopButton() {
 const inter = Inter({ subsets: ["latin"] })
 
 export default function ClientLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+  children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  const isAdmin = pathname?.startsWith("/admin")
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen flex flex-col`}>
@@ -77,11 +76,11 @@ export default function ClientLayout({
           disableTransitionOnChange={false}
           storageKey="nexusgear-theme"
         >
-          <ScrollToTop />
-          <Navbar />
+          {!isAdmin && <ScrollToTop />}
+          {!isAdmin && <Navbar />}
           {children}
-          <Footer />
-          <BackToTopButton />
+          {!isAdmin && <Footer />}
+          {!isAdmin && <BackToTopButton />}
           <Toaster />
         </ThemeProvider>
       </body>
