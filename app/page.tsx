@@ -166,8 +166,16 @@ export default function Home() {
               <div className="text-gray-500">Loading featured products...</div>
             </div>
           ) : featuredProducts.length > 0 ? (
-            featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            featuredProducts.map(product => (
+              <div key={product.id} className="relative">
+                {product.sale && product.originalPrice && (
+                  <Badge className="absolute top-3 left-3 bg-red-600 hover:bg-red-700">-{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%</Badge>
+                )}
+                {product.featured && (
+                  <Badge className="absolute top-3 right-3 bg-blue-600 hover:bg-blue-700">Featured</Badge>
+                )}
+                <ProductCard product={product} />
+              </div>
             ))
           ) : (
             <div className="col-span-full text-center py-8">
@@ -191,8 +199,16 @@ export default function Home() {
               <div className="text-gray-500">Loading new arrivals...</div>
             </div>
           ) : newArrivals.length > 0 ? (
-            newArrivals.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            newArrivals.map(product => (
+              <div key={product.id} className="relative">
+                {product.sale && product.originalPrice && (
+                  <Badge className="absolute top-3 left-3 bg-red-600 hover:bg-red-700">-{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%</Badge>
+                )}
+                {product.featured && (
+                  <Badge className="absolute top-3 right-3 bg-blue-600 hover:bg-blue-700">Featured</Badge>
+                )}
+                <ProductCard product={product} />
+              </div>
             ))
           ) : (
             <div className="col-span-full text-center py-8">

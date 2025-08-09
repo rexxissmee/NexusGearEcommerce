@@ -83,11 +83,11 @@ export default function ProductCard({ product }: ProductCardProps) {
       </Link>
 
       {/* Product Info */}
-      <div className="p-4">
-        <div className="mb-2">
+      <div className="p-4 flex flex-col h-[180px]">
+        <div className="flex-1">
           <p className="text-xs text-blue-600 uppercase tracking-wide font-medium">{product.category}</p>
           <Link href={`/product/${product.id}`} className="group">
-            <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+            <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 min-h-[2.5rem]">
               {product.name}
             </h3>
           </Link>
@@ -111,7 +111,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Price */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-auto">
           <div className="flex items-center space-x-2">
             <span className="text-lg font-bold text-gray-900">${product.price.toFixed(2)}</span>
             {product.originalPrice && (

@@ -55,6 +55,7 @@ export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<'all' | number>('all')
   const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'low_stock' | 'out_stock'>('all')
+  const [productFilter, setProductFilter] = useState<'all' | 'featured' | 'new_arrival' | 'on_sale'>('all')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -76,7 +77,12 @@ export default function ProductsPage() {
       if (!res.ok) throw new Error(Array.isArray(data.error) ? data.error[0] : (data.error || 'Load categories failed'))
       setCategories(data.data ?? [])
     } catch (e: any) {
-      toast({ title: 'Load Failed', description: e?.message || 'Unable to load categories.', variant: 'destructive' })
+      toast({
+        title: 'Load Failed',
+        description: e?.message || 'Unable to load categories.',
+        variant: 'destructive',
+        className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4'
+      })
     }
   }
 
@@ -88,7 +94,12 @@ export default function ProductsPage() {
       if (!res.ok) throw new Error(Array.isArray(data.error) ? data.error[0] : (data.error || 'Load products failed'))
       setProducts(data.data ?? [])
     } catch (e: any) {
-      toast({ title: 'Load Failed', description: e?.message || 'Unable to load products.', variant: 'destructive' })
+      toast({
+        title: 'Load Failed',
+        description: e?.message || 'Unable to load products.',
+        variant: 'destructive',
+        className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4'
+      })
     } finally {
       setLoading(false)
     }
@@ -99,21 +110,33 @@ export default function ProductsPage() {
     fetchProducts()
   }, [])
 
-  const filteredProducts = products.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = categoryFilter === 'all' || p.category_id === categoryFilter
-    const matchesStock = stockFilter === 'all' || 
-      (stockFilter === 'in_stock' && p.stock >= 20) ||
-      (stockFilter === 'low_stock' && p.stock > 0 && p.stock < 20) ||
-      (stockFilter === 'out_stock' && p.stock <= 0)
-    return matchesSearch && matchesCategory && matchesStock
-  })
+  const filteredProducts = useMemo(() => {
+    let result = products.filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesCategory = categoryFilter === 'all' || p.category_id === categoryFilter
+      const matchesStock = stockFilter === 'all' ||
+        (stockFilter === 'in_stock' && p.stock >= 20) ||
+        (stockFilter === 'low_stock' && p.stock > 0 && p.stock < 20) ||
+        (stockFilter === 'out_stock' && p.stock <= 0)
+      return matchesSearch && matchesCategory && matchesStock
+    })
+
+    if (productFilter === 'featured') {
+      result = result.filter(p => p.is_featured === 1)
+    } else if (productFilter === 'new_arrival') {
+      result = result.filter(p => p.is_new_arrival === 1)
+    } else if (productFilter === 'on_sale') {
+      result = result.filter(p => p.is_on_sale === 1)
+    }
+
+    return result
+  }, [searchTerm, categoryFilter, stockFilter, productFilter, products])
 
   const getStockBadge = (stock: number) => {
     if (stock <= 0) return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Out of Stock</Badge>
     if (stock < 20) return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Low Stock</Badge>
-      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">In Stock</Badge>
-    }
+    return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">In Stock</Badge>
+  }
 
   const openEdit = async (product: Product) => {
     try {
@@ -127,7 +150,12 @@ export default function ProductsPage() {
       setSelectedImages(data.data.images ?? [])
       setIsEditDialogOpen(true)
     } catch (e: any) {
-      toast({ title: 'Load Failed', description: e?.message || 'Unable to load product.', variant: 'destructive' })
+      toast({
+        title: 'Load Failed',
+        description: e?.message || 'Unable to load product.',
+        variant: 'destructive',
+        className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4'
+      })
     }
   }
 
@@ -141,10 +169,19 @@ export default function ProductsPage() {
       const res = await fetch('/public/api/products.php', { method: 'POST', body: form })
       const data = await res.json()
       if (!res.ok) throw new Error(Array.isArray(data.error) ? data.error[0] : (data.error || 'Delete failed'))
-      toast({ title: 'Deleted', description: 'Product deleted successfully.' })
+      toast({
+        title: 'Deleted',
+        description: 'Product deleted successfully.',
+        className: 'bg-green-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4'
+      })
       fetchProducts()
     } catch (e: any) {
-      toast({ title: 'Delete Failed', description: e?.message || 'Unable to delete.', variant: 'destructive' })
+      toast({
+        title: 'Delete Failed',
+        description: e?.message || 'Unable to delete.',
+        variant: 'destructive',
+        className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4'
+      })
     }
   }
 
@@ -172,7 +209,12 @@ export default function ProductsPage() {
 
     const handleSubmit = async () => {
       if (!form.name.trim() || !form.price) {
-        toast({ title: 'Validation', description: 'Name and price are required.', variant: 'destructive' })
+        toast({
+          title: 'Validation Error',
+          description: 'Name and price are required.',
+          variant: 'destructive',
+          className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4'
+        })
         return
       }
       try {
@@ -211,41 +253,51 @@ export default function ProductsPage() {
         const data = await res.json()
         if (!res.ok) throw new Error(Array.isArray(data.error) ? data.error[0] : (data.error || 'Save failed'))
 
-        toast({ title: product ? 'Updated' : 'Created', description: `Product ${product ? 'updated' : 'created'} successfully.` })
+        toast({
+          title: product ? 'Updated' : 'Created',
+          description: `Product ${product ? 'updated' : 'created'} successfully.`,
+          variant: 'default',
+          className: 'bg-green-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4'
+        })
         await fetchProducts()
         onSuccess()
         onClose()
       } catch (e: any) {
-        toast({ title: 'Failed', description: e?.message || 'Operation failed.', variant: 'destructive' })
+        toast({
+          title: 'Failed',
+          description: e?.message || 'Operation failed.',
+          variant: 'destructive',
+          className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4'
+        })
       } finally {
         setSubmitting(false)
       }
     }
 
     return (
-    <div className="space-y-4">
+      <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="name">Product Name</Label>
+          <div>
+            <Label htmlFor="name">Product Name</Label>
             <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        </div>
-        <div>
-          <Label htmlFor="category">Category</Label>
+          </div>
+          <div>
+            <Label htmlFor="category">Category</Label>
             <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select category" />
-            </SelectTrigger>
-            <SelectContent>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
                 {categories.map(c => (
                   <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
                 ))}
-            </SelectContent>
-          </Select>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
 
-      <div>
-        <Label htmlFor="description">Description</Label>
+        <div>
+          <Label htmlFor="description">Description</Label>
           <Textarea id="description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
         </div>
 
@@ -253,15 +305,15 @@ export default function ProductsPage() {
           <div>
             <Label htmlFor="price">Price</Label>
             <Input id="price" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-      </div>
-        <div>
+          </div>
+          <div>
             <Label htmlFor="original_price">Original Price</Label>
             <Input id="original_price" type="number" value={form.original_price} onChange={(e) => setForm({ ...form, original_price: e.target.value })} />
-        </div>
-        <div>
+          </div>
+          <div>
             <Label htmlFor="stock">Stock</Label>
             <Input id="stock" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
-        </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -285,8 +337,8 @@ export default function ProductsPage() {
                 <ImageIcon className="h-4 w-4" /> Current: <a href={product.thumbnail} target="_blank" className="text-blue-600">view</a>
               </div>
             )}
-      </div>
-      <div>
+          </div>
+          <div>
             <Label>Additional Images</Label>
             <Input ref={imgsRef} type="file" accept="image/*" multiple />
             {images && images.length > 0 && (
@@ -303,14 +355,14 @@ export default function ProductsPage() {
               </div>
             )}
           </div>
-      </div>
+        </div>
 
-      <DialogFooter>
+        <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={submitting}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={submitting}>{submitting ? (product ? 'Updating...' : 'Creating...') : (product ? 'Update Product' : 'Create Product')}</Button>
-      </DialogFooter>
-    </div>
-  )
+        </DialogFooter>
+      </div>
+    )
   }
 
   return (
@@ -332,40 +384,62 @@ export default function ProductsPage() {
               <DialogTitle>Add New Product</DialogTitle>
               <DialogDescription>Create a new product for your store.</DialogDescription>
             </DialogHeader>
-            <ProductForm onClose={() => setIsAddDialogOpen(false)} onSuccess={() => {}} />
+            <ProductForm onClose={() => setIsAddDialogOpen(false)} onSuccess={() => { }} />
           </DialogContent>
         </Dialog>
       </div>
 
       <Card className="border-0 shadow-sm">
         <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+          <div className="flex flex-wrap gap-4 items-center justify-end mb-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search products..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-            <Select value={String(categoryFilter)} onValueChange={(v) => setCategoryFilter(v === 'all' ? 'all' as const : Number(v))}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map(c => (
-                  <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={stockFilter} onValueChange={(v) => setStockFilter(v as any)}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="All Stock" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Stock</SelectItem>
-                <SelectItem value="in_stock">In Stock</SelectItem>
-                <SelectItem value="low_stock">Low Stock</SelectItem>
-                <SelectItem value="out_stock">Out of Stock</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="min-w-[150px]">
+              <Select onValueChange={(value) => setCategoryFilter(value === 'all' ? 'all' : parseInt(value))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="min-w-[150px]">
+              <Select onValueChange={(value) => setProductFilter(value as 'all' | 'featured' | 'new_arrival' | 'on_sale')}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Featured" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="featured">Featured</SelectItem>
+                  <SelectItem value="new_arrival">New Arrival</SelectItem>
+                  <SelectItem value="on_sale">On Sale</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="min-w-[150px]">
+              <Select onValueChange={(value) => setStockFilter(value as 'all' | 'in_stock' | 'low_stock' | 'out_stock')}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Stock" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="in_stock">In Stock</SelectItem>
+                  <SelectItem value="low_stock">Low Stock</SelectItem>
+                  <SelectItem value="out_stock">Out of Stock</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -378,30 +452,35 @@ export default function ProductsPage() {
           <div className="col-span-full text-center text-slate-600">No products found.</div>
         )}
         {!loading && filteredProducts.map((p) => (
-          <Card key={p.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
+          <Card key={p.id} className="border-0 shadow-sm hover:shadow-md transition-shadow relative">
+            {p.is_on_sale === 1 && p.original_price && (
+              <Badge className="absolute top-3 left-3 bg-red-600 hover:bg-red-700">-{Math.round(((p.original_price - p.price) / p.original_price) * 100)}%</Badge>
+            )}
+            {p.is_featured === 1 && (
+              <Badge className="absolute top-3 right-3 bg-blue-600 hover:bg-blue-700">Featured</Badge>
+            )}
             <CardContent className="p-4 flex flex-col h-full">
               <div className="aspect-square bg-slate-100 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
                 {p.thumbnail ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={p.thumbnail} alt={p.name} className="h-full w-full object-cover" />
                 ) : (
-                <Package className="h-12 w-12 text-slate-400" />
+                  <Package className="h-12 w-12 text-slate-400" />
                 )}
               </div>
               <div className="flex flex-col flex-1">
                 <div className="space-y-2 flex-1">
                   <h3 className="font-semibold text-slate-900 line-clamp-2 min-h-[2.5rem]">{p.name}</h3>
                   <p className="text-sm text-slate-600">{p.category_id ? (categoryMap.get(p.category_id) || '—') : '—'}</p>
-                <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between">
                     <span className="text-lg font-bold text-slate-900">${p.price}</span>
                     {getStockBadge(p.stock)}
                   </div>
-                  <p className="text-sm text-slate-600">Stock: {p.stock}</p>
                 </div>
                 <div className="flex items-center gap-2 pt-4 mt-auto">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="flex-1 h-8"
                     onClick={() => window.open(`/product/${p.id}`, '_blank')}
                   >
