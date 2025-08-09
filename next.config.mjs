@@ -1,3 +1,4 @@
+import path from 'node:path'
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -8,6 +9,15 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+  },
+  async rewrites() {
+    const projectBase = path.basename(process.cwd())
+    return [
+      {
+        source: '/public/api/:path*',
+        destination: `http://localhost/${projectBase}/public/api/:path*`,
+      },
+    ]
   },
 }
 

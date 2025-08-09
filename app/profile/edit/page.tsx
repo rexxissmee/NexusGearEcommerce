@@ -60,7 +60,7 @@ export default function EditProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost/nexus_gear/public/api/update-profile.php", {
+      const res = await fetch("/public/api/update-profile.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, id: user?.id }),

@@ -1,3 +1,6 @@
+'use client'
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -5,11 +8,25 @@ import { Input } from "@/components/ui/input"
 import { Search, ChevronRight } from "lucide-react"
 import ProductCard from "@/components/product-card"
 import CountdownTimer from "@/components/countdown-timer"
-import { getFeaturedProducts, getNewArrivals } from "@/lib/products"
+
+interface Product {
+  id: string
+  name: string
+  price: number
+  originalPrice?: number
+  image: string
+  category: string
+  rating: number
+  reviews: number
+  featured?: boolean
+  sale?: boolean
+  newArrival?: boolean
+}
 
 export default function Home() {
-  const featuredProducts = getFeaturedProducts().slice(0, 4)
-  const newArrivals = getNewArrivals().slice(0, 4)
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
+  const [newArrivals, setNewArrivals] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
 
   const categoryLinks = [
     { name: "PC Handheld", href: "/browse?category=PC%20Handheld" },
@@ -17,6 +34,34 @@ export default function Home() {
     { name: "Gaming Mouse", href: "/browse?category=Gaming%20Mouse" },
     { name: "Accessories", href: "/browse?category=Accessories" },
   ]
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true)
+        
+        // Fetch featured products
+        const featuredRes = await fetch('/public/api/home-products.php?type=featured')
+        const featuredData = await featuredRes.json()
+        if (featuredRes.ok) {
+          setFeaturedProducts(featuredData.data.slice(0, 4))
+        }
+        
+        // Fetch new arrivals
+        const newArrivalsRes = await fetch('/public/api/home-products.php?type=new_arrivals')
+        const newArrivalsData = await newArrivalsRes.json()
+        if (newArrivalsRes.ok) {
+          setNewArrivals(newArrivalsData.data.slice(0, 4))
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [])
 
   return (
     <main className="flex-1">
@@ -116,9 +161,19 @@ export default function Home() {
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {loading ? (
+            <div className="col-span-full text-center py-8">
+              <div className="text-gray-500">Loading featured products...</div>
+            </div>
+          ) : featuredProducts.length > 0 ? (
+            featuredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-8">
+              <div className="text-gray-500">No featured products available</div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -131,9 +186,19 @@ export default function Home() {
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {newArrivals.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {loading ? (
+            <div className="col-span-full text-center py-8">
+              <div className="text-gray-500">Loading new arrivals...</div>
+            </div>
+          ) : newArrivals.length > 0 ? (
+            newArrivals.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-8">
+              <div className="text-gray-500">No new arrivals available</div>
+            </div>
+          )}
         </div>
       </section>
 

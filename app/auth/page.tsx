@@ -22,7 +22,7 @@ function LoginButton({ loading, onError, btnId }: { loading: boolean, onError: (
     const payload = { email, password };
 
     try {
-      const res = await fetch('http://localhost/nexus_gear/public/api/login.php', {
+      const res = await fetch('/public/api/login.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -148,7 +148,7 @@ export default function AuthPage() {
       };
 
       try {
-        const res = await fetch('http://localhost/nexus_gear/public/api/register.php', {
+        const res = await fetch('/public/api/register.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),

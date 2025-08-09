@@ -4,6 +4,9 @@ header('Access-Control-Allow-Headers: Content-Type');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Content-Type: application/json');
 
+require_once __DIR__ . '/../../config/app.php';
+require_once APP_ROOT . '/config/database.php';
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
@@ -14,8 +17,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
-
-require_once '../../config/database.php';
 
 $data = json_decode(file_get_contents('php://input'), true);
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,60 +30,55 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Eye } from 'lucide-react'
+import { Plus, MoreHorizontal, Edit, Trash2 } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-const categoriesData = [
-  {
-    id: 1,
-    name: 'Gaming Mouse',
-    description: 'High-precision gaming mice with customizable DPI',
-    productCount: 24,
-    status: 'active',
-    createdAt: '2024-01-10',
-  },
-  {
-    id: 2,
-    name: 'PC Handheld',
-    description: 'Portable gaming PCs and handheld devices',
-    productCount: 12,
-    status: 'active',
-    createdAt: '2024-01-08',
-  },
-  {
-    id: 3,
-    name: 'Controller',
-    description: 'Wireless controllers and gaming accessories',
-    productCount: 18,
-    status: 'active',
-    createdAt: '2024-01-05',
-  },
-  {
-    id: 4,
-    name: 'Accessories',
-    description: 'Gaming mousepads, stands, and other essentials',
-    productCount: 35,
-    status: 'active',
-    createdAt: '2024-01-03',
-  },
-  {
-    id: 5,
-    name: 'VR Equipment',
-    description: 'Virtual reality headsets and accessories',
-    productCount: 0,
-    status: 'inactive',
-    createdAt: '2024-01-01',
-  },
-]
+type Category = {
+  id: number
+  name: string
+  description: string | null
+  status: 'active' | 'inactive'
+  created_at: string
+}
 
 export default function CategoriesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<any>(null)
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState<boolean>(false)
+  const { toast } = useToast()
 
-  const filteredCategories = categoriesData.filter(category =>
+  const API_URL = '/public/api/categories.php'
+
+  const fetchCategories = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch(API_URL, { method: 'GET' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(Array.isArray(data.error) ? data.error[0] : (data.error || 'Failed to load categories'))
+      setCategories(data.data || [])
+    } catch (err: any) {
+      toast({
+        title: 'Load Failed',
+        description: err?.message || 'Unable to load categories.',
+        variant: 'destructive',
+        className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4',
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchCategories()
+  }, [])
+
+  const filteredCategories = categories.filter(category =>
     category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    category.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (category.description || '').toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const getStatusBadge = (status: string) => {
@@ -94,39 +89,127 @@ export default function CategoriesPage() {
     )
   }
 
-  const handleEdit = (category: any) => {
+  const handleEdit = (category: Category) => {
     setSelectedCategory(category)
     setIsEditDialogOpen(true)
   }
 
-  const CategoryForm = ({ category, onClose }: { category?: any; onClose: () => void }) => (
-    <div className="space-y-4">
-      <div>
-        <Label htmlFor="name">Category Name</Label>
-        <Input
-          id="name"
-          placeholder="Enter category name"
-          defaultValue={category?.name || ''}
-        />
+  function CategoryForm({
+    category,
+    onClose,
+    onSuccess,
+  }: {
+    category?: Category | null
+    onClose: () => void
+    onSuccess: () => void
+  }) {
+    const [name, setName] = useState<string>(category?.name || '')
+    const [description, setDescription] = useState<string>(category?.description || '')
+    const [status, setStatus] = useState<'active' | 'inactive'>(category?.status || 'active')
+    const [submitting, setSubmitting] = useState<boolean>(false)
+
+    const handleSubmit = async () => {
+      if (!name.trim()) {
+        toast({
+          title: 'Validation Error',
+          description: 'Category name is required.',
+          variant: 'destructive',
+          className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4',
+        })
+        return
+      }
+
+      try {
+        setSubmitting(true)
+        if (category) {
+          const res = await fetch(API_URL, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: category.id, name: name.trim(), description: description.trim(), status }),
+          })
+          const data = await res.json()
+          if (!res.ok) throw new Error(Array.isArray(data.error) ? data.error[0] : (data.error || 'Update failed'))
+
+          toast({
+            title: 'Updated',
+            description: 'Category updated successfully.',
+            variant: 'default',
+            className: 'bg-green-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4',
+          })
+        } else {
+          const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name.trim(), description: description.trim(), status }),
+          })
+          const data = await res.json()
+          if (!res.ok) throw new Error(Array.isArray(data.error) ? data.error[0] : (data.error || 'Create failed'))
+
+          toast({
+            title: 'Created',
+            description: 'Category created successfully.',
+            variant: 'default',
+            className: 'bg-green-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4',
+          })
+        }
+        await fetchCategories()
+        onSuccess()
+        onClose()
+      } catch (err: any) {
+        toast({
+          title: 'Operation Failed',
+          description: err?.message || 'Please try again.',
+          variant: 'destructive',
+          className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4',
+        })
+      } finally {
+        setSubmitting(false)
+      }
+    }
+
+    return (
+      <div className="space-y-4">
+        <div>
+          <Label htmlFor="name">Category Name</Label>
+          <Input
+            id="name"
+            placeholder="Enter category name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div>
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            placeholder="Enter category description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+        <div>
+          <Label htmlFor="status">Status</Label>
+          <Select value={status} onValueChange={(v: 'active' | 'inactive') => setStatus(v)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={submitting}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={submitting}>
+            {category ? (submitting ? 'Updating...' : 'Update Category') : (submitting ? 'Creating...' : 'Create Category')}
+          </Button>
+        </DialogFooter>
       </div>
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          placeholder="Enter category description"
-          defaultValue={category?.description || ''}
-        />
-      </div>
-      <DialogFooter>
-        <Button variant="outline" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button onClick={onClose}>
-          {category ? 'Update' : 'Create'} Category
-        </Button>
-      </DialogFooter>
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -150,7 +233,7 @@ export default function CategoriesPage() {
                 Create a new product category for your store.
               </DialogDescription>
             </DialogHeader>
-            <CategoryForm onClose={() => setIsAddDialogOpen(false)} />
+            <CategoryForm onClose={() => setIsAddDialogOpen(false)} onSuccess={() => {}} />
           </DialogContent>
         </Dialog>
       </div>
@@ -159,9 +242,6 @@ export default function CategoriesPage() {
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle>All Categories</CardTitle>
-          <CardDescription>
-            A list of all product categories in your store.
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -169,22 +249,28 @@ export default function CategoriesPage() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead>Products</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCategories.map((category) => (
+              {loading && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-slate-600">Loading categories...</TableCell>
+                </TableRow>
+              )}
+              {!loading && filteredCategories.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-slate-600">No categories found.</TableCell>
+                </TableRow>
+              )}
+              {!loading && filteredCategories.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell className="font-medium">{category.name}</TableCell>
-                  <TableCell className="text-slate-600">{category.description}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{category.productCount} products</Badge>
-                  </TableCell>
+                  <TableCell className="text-slate-600">{category.description || '-'}</TableCell>
                   <TableCell>{getStatusBadge(category.status)}</TableCell>
-                  <TableCell className="text-slate-600">{category.createdAt}</TableCell>
+                  <TableCell className="text-slate-600">{category.created_at}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -193,15 +279,37 @@ export default function CategoriesPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="h-4 w-4 mr-2" />
-                          View
-                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleEdit(category)}>
                           <Edit className="h-4 w-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={async () => {
+                            const confirmed = window.confirm(`Delete category "${category.name}"?`)
+                            if (!confirmed) return
+                            try {
+                              const url = `${API_URL}?id=${category.id}`
+                              const res = await fetch(url, { method: 'DELETE' })
+                              const data = await res.json()
+                              if (!res.ok) throw new Error(Array.isArray(data.error) ? data.error[0] : (data.error || 'Delete failed'))
+                              toast({
+                                title: 'Deleted',
+                                description: 'Category deleted successfully.',
+                                variant: 'default',
+                                className: 'bg-green-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4',
+                              })
+                              fetchCategories()
+                            } catch (err: any) {
+                              toast({
+                                title: 'Delete Failed',
+                                description: err?.message || 'Unable to delete category.',
+                                variant: 'destructive',
+                                className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4',
+                              })
+                            }
+                          }}
+                        >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Delete
                         </DropdownMenuItem>
@@ -224,12 +332,15 @@ export default function CategoriesPage() {
               Update the category information.
             </DialogDescription>
           </DialogHeader>
-          <CategoryForm 
-            category={selectedCategory} 
-            onClose={() => setIsEditDialogOpen(false)} 
+          <CategoryForm
+            category={selectedCategory}
+            onClose={() => setIsEditDialogOpen(false)}
+            onSuccess={() => setSelectedCategory(null)}
           />
         </DialogContent>
       </Dialog>
+
+      
     </div>
   )
 }
