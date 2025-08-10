@@ -108,11 +108,11 @@ export default function AdminLayout({
       <div className="px-3 py-4">
         <Link
           href="/"
-          className="group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 text-gray-700 hover:bg-blue-100 hover:text-blue-700"
+          className={`group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 text-gray-700 hover:bg-blue-100 hover:text-blue-700 ${sidebarCollapsed ? 'justify-center' : ''}`}
           title="Back to homepage"
         >
-          <ArrowLeftFromLine className="h-5 w-5 mr-3" />
-          Back to homepage
+          <ArrowLeftFromLine className={`h-5 w-5 ${sidebarCollapsed ? '' : 'mr-3'}`} />
+          {!sidebarCollapsed && 'Back to homepage'}
         </Link>
       </div>
     </div>
