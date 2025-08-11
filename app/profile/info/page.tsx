@@ -73,7 +73,7 @@ export default function ProfileInfoPage() {
                   <p className="text-gray-900 dark:text-white font-medium">{user?.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Account Status</label>
+                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Account Status</label> <br />
                   <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Active</Badge>
                 </div>
               </div>

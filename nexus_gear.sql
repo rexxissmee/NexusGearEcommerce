@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 11, 2025 at 08:50 AM
+-- Generation Time: Aug 11, 2025 at 11:09 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -204,7 +204,7 @@ INSERT INTO `users` (`id`, `first_name`, `last_name`, `email`, `phone`, `date_of
 (1, 'Administrator', NULL, 'admin@nexusgear.com', '0987654321', NULL, NULL, '$2y$10$vZVw5sNK3YqPj7QZid6Ziu7hvXKakQwS3w58sNN7dI63TCAbVPj3.', 'admin', NULL, NULL, NULL, NULL, '2025-08-04 06:17:49', '2025-08-09 12:26:39'),
 (2, 'Hung', 'Quach', 'rexxissmee@gmail.com', '0972314822', '2005-02-04', 'Male', '$2y$10$ntMl81TFvZHPyjmuACsKKOrgGDYPiYHdnHDmiE7kEzyW2Fvz/XqEu', 'user', '137 Nguyen Truyen Thanh', 'Binh Thuy', 'Can Tho', 'Viet Nam', '2025-08-04 06:19:35', '2025-08-05 22:11:30'),
 (3, 'Khang', 'Le', 'khanglee2k5@gmail.com', '0914496322', '2004-04-20', 'Male', '$2y$10$5/ERUkHqVwS9Q8s9Jm8/WuzHw.XuEP9wE31SAnK5jWVA0qatSICzu', 'user', '', '', '', '', '2025-08-07 06:17:54', '2025-08-08 03:19:47'),
-(6, 'Khang', 'Dương Văn', 'duongvankhang2021@gmail.com', '+84867046251', '2005-12-06', '', '$2y$10$M0jrj73Kk3a7b5PEfhZSmu3E4/ioYNqgSJK/v/TuUJDejiJkzw8gy', 'user', '', '', 'Can Tho', 'Vietnam', '2025-08-09 07:49:11', '2025-08-09 12:30:06');
+(6, 'Khang', 'Duong Van', 'duongvankhang2021@gmail.com', '0867046251', '2005-12-06', '', '$2y$10$M0jrj73Kk3a7b5PEfhZSmu3E4/ioYNqgSJK/v/TuUJDejiJkzw8gy', 'user', '', '', 'Can Tho', 'Vietnam', '2025-08-09 07:49:11', '2025-08-11 09:08:57');
 
 -- --------------------------------------------------------
 
