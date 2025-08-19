@@ -4,33 +4,82 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Star, ShoppingCart, Heart, Share2, Minus, Plus } from "lucide-react"
-import { products } from "@/lib/products"
 import ProductCard from "@/components/product-card"
 import { notFound } from "next/navigation"
+import { headers } from "next/headers"
 
 interface ProductPageProps {
   params: { id: string }
 }
 
+async function getBaseUrlFromHeaders(): Promise<string> {
+  const h = await headers()
+  const host = h.get('host') || 'localhost:3000'
+  const proto = h.get('x-forwarded-proto') || 'http'
+  return `${proto}://${host}`
+}
+
+async function fetchProductFromApi(id: string) {
+  const base = await getBaseUrlFromHeaders()
+  const res = await fetch(`${base}/public/api/products.php?id=${encodeURIComponent(id)}`, { cache: 'no-store' })
+  if (!res.ok) return null
+  const json = await res.json()
+  const p = json?.data?.product
+  if (!p) return null
+  const imgs = json?.data?.images || []
+  return {
+    id: String(p.id),
+    name: p.name as string,
+    price: Number(p.price),
+    originalPrice: p.original_price !== null ? Number(p.original_price) : undefined,
+    image: p.thumbnail || "/placeholder.svg?height=600&width=600",
+    category: p.category_name || 'Other',
+    rating: p.average_rating ? Number(p.average_rating) : 0,
+    reviews: p.review_count ? Number(p.review_count) : 0,
+    featured: Boolean(p.is_featured),
+    sale: Boolean(p.is_on_sale),
+    newArrival: Boolean(p.is_new_arrival),
+    images: Array.isArray(imgs) && imgs.length ? imgs.map((i: any) => i.image_url) : [],
+  }
+}
+
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params
-  const product = products.find((p) => p.id === id)
+  const product: any = await fetchProductFromApi(id)
 
   if (!product) {
     notFound()
   }
 
   // Ensure we get at least 4 related products
-  let relatedProducts = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4)
-
-  // If we don't have enough related products in the same category, add some featured products
-  if (relatedProducts.length < 4) {
-    const additionalProducts = products
-      .filter((p) => p.id !== product.id && !relatedProducts.some((rp) => rp.id === p.id))
-      .slice(0, 4 - relatedProducts.length)
-
-    relatedProducts = [...relatedProducts, ...additionalProducts]
-  }
+  let relatedProducts: any[] = []
+  try {
+    const base = await getBaseUrlFromHeaders()
+    const res = await fetch(`${base}/public/api/products.php`, { cache: 'no-store' })
+    if (res.ok) {
+      const json = await res.json()
+      const mapped = (json.data || []).map((p: any) => ({
+        id: String(p.id),
+        name: p.name,
+        price: Number(p.price),
+        originalPrice: p.original_price !== null ? Number(p.original_price) : undefined,
+        image: p.thumbnail || "/placeholder.svg?height=300&width=300",
+        category: p.category_name || 'Other',
+        rating: p.average_rating ? Number(p.average_rating) : 0,
+        reviews: p.review_count ? Number(p.review_count) : 0,
+        featured: Boolean(p.is_featured),
+        sale: Boolean(p.is_on_sale),
+        newArrival: Boolean(p.is_new_arrival),
+      }))
+      relatedProducts = mapped.filter((p: any) => p.category === product.category && p.id !== product.id).slice(0, 4)
+      if (relatedProducts.length < 4) {
+        const additional = mapped
+          .filter((p: any) => p.id !== product.id && !relatedProducts.some((rp) => rp.id === p.id))
+          .slice(0, 4 - relatedProducts.length)
+        relatedProducts = [...relatedProducts, ...additional]
+      }
+    }
+  } catch (e) {}
 
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
@@ -75,14 +124,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             {/* Thumbnail images */}
             <div className="grid grid-cols-4 gap-2">
-              {[1, 2, 3, 4].map((i) => (
+              {(product.images && product.images.length ? product.images : [
+                "/placeholder.svg?height=150&width=150",
+                "/placeholder.svg?height=150&width=150",
+                "/placeholder.svg?height=150&width=150",
+                "/placeholder.svg?height=150&width=150",
+              ]).slice(0, 4).map((img: string, i: number) => (
                 <div
                   key={i}
                   className="aspect-square bg-gray-50 rounded-md overflow-hidden cursor-pointer border-2 border-transparent hover:border-blue-300"
                 >
                   <Image
-                    src={`/placeholder.svg?height=150&width=150`}
-                    alt={`${product.name} view ${i}`}
+                    src={img || `/placeholder.svg?height=150&width=150`}
+                    alt={`${product.name} view ${i + 1}`}
                     width={150}
                     height={150}
                     className="object-cover w-full h-full"

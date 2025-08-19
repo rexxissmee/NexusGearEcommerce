@@ -1,5 +1,7 @@
 "use client"
 import { useState } from "react"
+import { useToast } from "@/hooks/use-toast"
+import { useAuthStore } from "@/store/auth-store"
 import type React from "react"
 
 import Image from "next/image"
@@ -27,16 +29,36 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
+  const { toast } = useToast()
+  const user = (typeof window !== 'undefined') ? JSON.parse(localStorage.getItem('user') || 'null') : null
 
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    // Redirect to auth page for login requirement
-    window.location.href = "/auth"
+    try {
+      const loggedUser = user
+      if (!loggedUser?.id) {
+        window.location.href = "/auth"
+        return
+      }
+      const res = await fetch('/public/api/cart.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add', user_id: Number(loggedUser.id), product_id: Number(product.id), quantity: 1 })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error?.[0] || data?.error || 'Add to cart failed')
+      toast({ title: 'Added to cart', description: `${product.name} has been added to your cart.`, className: 'bg-green-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4' })
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('cart:refresh'))
+      }
+    } catch (err: any) {
+      toast({ title: 'Failed', description: err?.message || 'Unable to add to cart.', variant: 'destructive', className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4' })
+    }
   }
 
   return (

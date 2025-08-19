@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -38,74 +38,20 @@ import {
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Plus, Search, MoreHorizontal, Edit, Trash2, Eye, Mail, Phone } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 
-const usersData = [
-  {
-    id: 1,
-    name: 'John Doe',
-    email: 'john@example.com',
-    phone: '+1 (555) 123-4567',
-    role: 'customer',
-    status: 'active',
-    totalSpent: 1299.97,
-    orders: 8,
-    lastActive: '2024-01-15',
-    joinDate: '2023-06-15',
-    avatar: '/placeholder.svg?height=40&width=40',
-  },
-  {
-    id: 2,
-    name: 'Jane Smith',
-    email: 'jane@example.com',
-    phone: '+1 (555) 987-6543',
-    role: 'customer',
-    status: 'active',
-    totalSpent: 899.98,
-    orders: 5,
-    lastActive: '2024-01-14',
-    joinDate: '2023-08-22',
-    avatar: '/placeholder.svg?height=40&width=40',
-  },
-  {
-    id: 3,
-    name: 'Mike Johnson',
-    email: 'mike@example.com',
-    phone: '+1 (555) 456-7890',
-    role: 'customer',
-    status: 'inactive',
-    totalSpent: 199.99,
-    orders: 1,
-    lastActive: '2023-12-10',
-    joinDate: '2023-11-05',
-    avatar: '/placeholder.svg?height=40&width=40',
-  },
-  {
-    id: 4,
-    name: 'Sarah Wilson',
-    email: 'sarah@example.com',
-    phone: '+1 (555) 321-0987',
-    role: 'admin',
-    status: 'active',
-    totalSpent: 0,
-    orders: 0,
-    lastActive: '2024-01-15',
-    joinDate: '2023-01-15',
-    avatar: '/placeholder.svg?height=40&width=40',
-  },
-  {
-    id: 5,
-    name: 'Tom Brown',
-    email: 'tom@example.com',
-    phone: '+1 (555) 654-3210',
-    role: 'customer',
-    status: 'active',
-    totalSpent: 2199.95,
-    orders: 12,
-    lastActive: '2024-01-13',
-    joinDate: '2023-03-10',
-    avatar: '/placeholder.svg?height=40&width=40',
-  },
-]
+// No mock data; show loading until API returns
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -114,6 +60,43 @@ export default function UsersPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [usersData, setUsersData] = useState<any[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const { toast } = useToast()
+  const [isViewOpen, setIsViewOpen] = useState(false)
+  const [viewUser, setViewUser] = useState<any>(null)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [deleteUserId, setDeleteUserId] = useState<number | null>(null)
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true)
+        const res = await fetch('/public/api/users.php')
+        const json = await res.json()
+        if (res.ok) {
+          const mapped = (json.data || []).map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            phone: u.phone,
+            role: u.role === 'admin' ? 'admin' : 'customer',
+            status: 'active',
+            totalSpent: Number(u.total_spent || 0),
+            orders: Number(u.orders || u.orders_count || 0),
+            joined: u.joined,
+            avatar: '/placeholder.svg?height=40&width=40',
+          }))
+          setUsersData(mapped)
+        }
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchUsers()
+  }, [])
 
   const filteredUsers = usersData.filter(user => {
     const matchesSearch = 
@@ -145,71 +128,152 @@ export default function UsersPage() {
     setIsEditDialogOpen(true)
   }
 
-  const UserForm = ({ user, onClose }: { user?: any; onClose: () => void }) => (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="name">Full Name</Label>
-          <Input
-            id="name"
-            placeholder="Enter full name"
-            defaultValue={user?.name || ''}
-          />
+  const handleView = (user: any) => {
+    setViewUser(user)
+    setIsViewOpen(true)
+  }
+
+  const handleDelete = async (userId: number) => {
+    try {
+      const res = await fetch('/public/api/users.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id: userId })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error?.[0] || data?.error || 'Delete failed')
+      setUsersData(prev => prev.filter(u => u.id !== userId))
+      toast({
+        title: 'User deleted',
+        description: 'The user has been removed successfully.',
+        className: 'bg-green-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4'
+      })
+    } catch (e: any) {
+      toast({
+        title: 'Delete failed',
+        description: e?.message || 'Unable to delete user.',
+        variant: 'destructive',
+        className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4'
+      })
+    }
+  }
+
+  const submitEdit = async (form: { name: string; email: string; phone: string; role: string; status: string }) => {
+    if (!selectedUser) return setIsEditDialogOpen(false)
+    try {
+      const nameParts = (form.name || '').trim().split(' ')
+      const first_name = nameParts.shift() || ''
+      const last_name = nameParts.join(' ')
+      const payload = {
+        action: 'update',
+        id: selectedUser.id,
+        first_name,
+        last_name,
+        email: form.email,
+        phone: form.phone,
+        role: (form.role === 'admin' ? 'admin' : 'user'),
+      }
+      const res = await fetch('/public/api/users.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error?.[0] || data?.error || 'Update failed')
+      setUsersData(prev => prev.map(u => u.id === selectedUser.id ? { ...u, name: form.name, email: form.email, phone: form.phone, role: form.role, status: form.status } : u))
+      toast({
+        title: 'User updated',
+        description: 'Changes have been saved.',
+        className: 'bg-green-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4'
+      })
+      setIsEditDialogOpen(false)
+    } catch (e: any) {
+      toast({
+        title: 'Update failed',
+        description: e?.message || 'Unable to update user.',
+        variant: 'destructive',
+        className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4'
+      })
+    }
+  }
+
+  const UserForm = ({ user, onClose }: { user?: any; onClose: () => void }) => {
+    const [form, setForm] = useState({
+      name: user?.name || '',
+      email: user?.email || '',
+      phone: user?.phone || '',
+      role: user?.role || 'customer',
+      status: user?.status || 'active',
+    })
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="name">Full Name</Label>
+            <Input
+              id="name"
+              placeholder="Enter full name"
+              value={form.name}
+              onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
+            />
+          </div>
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter email address"
+              value={form.email}
+              onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="phone">Phone</Label>
+            <Input
+              id="phone"
+              placeholder="Enter phone number"
+              value={form.phone}
+              onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))}
+            />
+          </div>
+          <div>
+            <Label htmlFor="role">Role</Label>
+            <Select value={form.role} onValueChange={(val) => setForm(prev => ({ ...prev, role: val }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="customer">Customer</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div>
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="Enter email address"
-            defaultValue={user?.email || ''}
-          />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="phone">Phone</Label>
-          <Input
-            id="phone"
-            placeholder="Enter phone number"
-            defaultValue={user?.phone || ''}
-          />
-        </div>
-        <div>
-          <Label htmlFor="role">Role</Label>
-          <Select defaultValue={user?.role || 'customer'}>
+          <Label htmlFor="status">Status</Label>
+          <Select value={form.status} onValueChange={(val) => setForm(prev => ({ ...prev, status: val }))}>
             <SelectTrigger>
-              <SelectValue placeholder="Select role" />
+              <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="customer">Customer</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
             </SelectContent>
           </Select>
         </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={() => { submitEdit(form) }}>
+            {user ? 'Update' : 'Create'} User
+          </Button>
+        </DialogFooter>
       </div>
-      <div>
-        <Label htmlFor="status">Status</Label>
-        <Select defaultValue={user?.status || 'active'}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <DialogFooter>
-        <Button variant="outline" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button onClick={onClose}>
-          {user ? 'Update' : 'Create'} User
-        </Button>
-      </DialogFooter>
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -219,23 +283,6 @@ export default function UsersPage() {
           <h1 className="text-3xl font-bold text-slate-900">Users</h1>
           <p className="text-slate-600 mt-2">Manage customer accounts and administrators</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Add User
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New User</DialogTitle>
-              <DialogDescription>
-                Create a new user account for your store.
-              </DialogDescription>
-            </DialogHeader>
-            <UserForm onClose={() => setIsAddDialogOpen(false)} />
-          </DialogContent>
-        </Dialog>
       </div>
 
       {/* Search and Filters */}
@@ -287,28 +334,35 @@ export default function UsersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Orders</TableHead>
-                <TableHead>Total Spent</TableHead>
-                <TableHead>Last Active</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-left">User</TableHead>
+                <TableHead className="text-left">Contact</TableHead>
+                <TableHead className="text-center">Role</TableHead>
+                <TableHead className="text-center">Status</TableHead>
+                <TableHead className="text-center">Orders</TableHead>
+                <TableHead className="text-right">Total Spent</TableHead>
+                <TableHead className="text-right">Joined at</TableHead>
+                <TableHead className="text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((user) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center text-slate-500 py-8">Loading...</TableCell>
+                </TableRow>
+              ) : filteredUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center text-slate-500 py-8">No users found</TableCell>
+                </TableRow>
+              ) : filteredUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={user.avatar || "/placeholder.svg"} />
-                        <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                        <AvatarFallback>{user.name.split(' ').map((n: string) => n[0]).join('')}</AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="font-medium">{user.name}</div>
-                        <div className="text-sm text-slate-600">Joined {user.joinDate}</div>
                       </div>
                     </div>
                   </TableCell>
@@ -324,14 +378,14 @@ export default function UsersPage() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{getRoleBadge(user.role)}</TableCell>
-                  <TableCell>{getStatusBadge(user.status)}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{user.orders} orders</Badge>
+                  <TableCell className="text-center">{getRoleBadge(user.role)}</TableCell>
+                  <TableCell className="text-center">{getStatusBadge(user.status)}</TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant="outline" className="justify-center min-w-24">{user.orders} orders</Badge>
                   </TableCell>
-                  <TableCell className="font-medium">${user.totalSpent.toFixed(2)}</TableCell>
-                  <TableCell className="text-slate-600">{user.lastActive}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right font-medium">${user.totalSpent.toFixed(2)}</TableCell>
+                  <TableCell className="text-right text-slate-600">{new Date(user.joined).toISOString().slice(0,10)}</TableCell>
+                  <TableCell className="text-center">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">
@@ -339,7 +393,7 @@ export default function UsersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleView(user)}>
                           <Eye className="h-4 w-4 mr-2" />
                           View Profile
                         </DropdownMenuItem>
@@ -347,7 +401,10 @@ export default function UsersPage() {
                           <Edit className="h-4 w-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => { setDeleteUserId(user.id); setIsDeleteOpen(true) }}
+                        >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Delete
                         </DropdownMenuItem>
@@ -363,7 +420,7 @@ export default function UsersPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent onInteractOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>
@@ -376,6 +433,51 @@ export default function UsersPage() {
           />
         </DialogContent>
       </Dialog>
+
+      {/* View Dialog */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent onInteractOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>User Details</DialogTitle>
+            <DialogDescription>Basic information about this user</DialogDescription>
+          </DialogHeader>
+          {viewUser && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={viewUser.avatar || "/placeholder.svg"} />
+                  <AvatarFallback>{viewUser.name.split(' ').map((n: string) => n[0]).join('')}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="font-medium">{viewUser.name}</div>
+                  <div className="text-sm text-slate-600">Joined {new Date(viewUser.joined).toISOString().slice(0,10)}</div>
+                </div>
+              </div>
+              <div className="text-sm"><span className="text-slate-500">Email:</span> {viewUser.email}</div>
+              <div className="text-sm"><span className="text-slate-500">Phone:</span> {viewUser.phone}</div>
+              <div className="text-sm"><span className="text-slate-500">Role:</span> {viewUser.role === 'admin' ? 'Admin' : 'Customer'}</div>
+              <div className="text-sm"><span className="text-slate-500">Orders:</span> {viewUser.orders}</div>
+              <div className="text-sm"><span className="text-slate-500">Total Spent:</span> ${viewUser.totalSpent?.toFixed(2)}</div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirm */}
+      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently remove the user.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (deleteUserId) handleDelete(deleteUserId); setIsDeleteOpen(false); }}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

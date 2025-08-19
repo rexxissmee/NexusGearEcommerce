@@ -417,7 +417,7 @@ export default function ProductsPage() {
             <div className="min-w-[150px]">
               <Select onValueChange={(value) => setProductFilter(value as 'all' | 'featured' | 'new_arrival' | 'on_sale')}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Featured" />
+                  <SelectValue placeholder="Special" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All</SelectItem>

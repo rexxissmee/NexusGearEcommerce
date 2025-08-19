@@ -27,16 +27,16 @@ try {
     $type = $_GET['type'] ?? 'featured';
     
     if ($type === 'featured') {
-        // Get featured products
-        $stmt = $pdo->query('SELECT id, name, price, original_price, thumbnail, is_featured, is_on_sale, is_new_arrival FROM products WHERE is_featured = 1 ORDER BY created_at DESC LIMIT 8');
+        // Get featured products with category name
+        $stmt = $pdo->query('SELECT p.id, p.name, p.price, p.original_price, p.thumbnail, p.is_featured, p.is_on_sale, p.is_new_arrival, p.average_rating, p.review_count, c.name AS category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.is_featured = 1 ORDER BY p.created_at DESC LIMIT 8');
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } elseif ($type === 'new_arrivals') {
-        // Get new arrivals
-        $stmt = $pdo->query('SELECT id, name, price, original_price, thumbnail, is_featured, is_on_sale, is_new_arrival FROM products WHERE is_new_arrival = 1 ORDER BY created_at DESC LIMIT 8');
+        // Get new arrivals with category name
+        $stmt = $pdo->query('SELECT p.id, p.name, p.price, p.original_price, p.thumbnail, p.is_featured, p.is_on_sale, p.is_new_arrival, p.average_rating, p.review_count, c.name AS category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.is_new_arrival = 1 ORDER BY p.created_at DESC LIMIT 8');
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } elseif ($type === 'sale') {
-        // Get sale products
-        $stmt = $pdo->query('SELECT id, name, price, original_price, thumbnail, is_featured, is_on_sale, is_new_arrival FROM products WHERE is_on_sale = 1 ORDER BY created_at DESC LIMIT 8');
+        // Get sale products with category name
+        $stmt = $pdo->query('SELECT p.id, p.name, p.price, p.original_price, p.thumbnail, p.is_featured, p.is_on_sale, p.is_new_arrival, p.average_rating, p.review_count, c.name AS category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.is_on_sale = 1 ORDER BY p.created_at DESC LIMIT 8');
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } else {
         respond(400, ['error' => 'Invalid type parameter']);
@@ -48,11 +48,11 @@ try {
             'id' => (string)$product['id'],
             'name' => $product['name'],
             'price' => (float)$product['price'],
-            'originalPrice' => $product['original_price'] ? (float)$product['original_price'] : null,
+            'originalPrice' => isset($product['original_price']) && $product['original_price'] !== null ? (float)$product['original_price'] : null,
             'image' => $product['thumbnail'] ?: '/placeholder.svg?height=300&width=300',
-            'category' => 'Gaming Gear', // Default category
-            'rating' => 4.5, // Default rating
-            'reviews' => rand(50, 500), // Random reviews for demo
+            'category' => $product['category_name'] ?: 'Other',
+            'rating' => isset($product['average_rating']) ? (float)$product['average_rating'] : 4.5,
+            'reviews' => isset($product['review_count']) ? (int)$product['review_count'] : 0,
             'featured' => (bool)$product['is_featured'],
             'sale' => (bool)$product['is_on_sale'],
             'newArrival' => (bool)$product['is_new_arrival']

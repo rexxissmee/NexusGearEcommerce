@@ -58,11 +58,11 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const logout = useAuthStore((s) => s.logout)
 
   const Sidebar = ({ mobile = false }) => (
-    <div className={`flex h-full flex-col bg-white ${mobile ? 'w-full' : sidebarCollapsed ? 'w-16' : 'w-64'}`}>
+    <div className={`flex h-full flex-col bg-white ${mobile ? 'w-full' : sidebarCollapsed ? 'w-16' : 'w-56'}`}>
       <div className="flex h-16 items-center justify-center border-b border-blue-200 px-4">
         <div className="flex items-center gap-2">
           <Link href="/admin">
@@ -121,13 +121,13 @@ export default function AdminLayout({
   return (
     <div className="flex h-screen bg-[#eff6ff]">
       {/* Desktop Sidebar */}
-      <div className={`hidden lg:flex lg:flex-shrink-0 transition-all duration-300 ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'}`}>
+      <div className={`hidden lg:flex lg:flex-shrink-0 transition-all duration-300 ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-56'}`}>
         <Sidebar />
       </div>
 
       {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side="left" className="p-0 w-64">
+        <SheetContent side="left" className="p-0 w-56">
           <Sidebar mobile />
         </SheetContent>
       </Sheet>

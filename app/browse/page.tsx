@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useMemo } from "react"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -10,10 +10,12 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
 import { Search, Filter, Star, X } from "lucide-react"
 import ProductCard from "@/components/product-card"
-import { products, categories, filterProducts, sortProducts } from "@/lib/products"
+import { filterProducts, sortProducts } from "@/lib/products"
+import { useEffect as useClientEffect } from "react"
 
 export default function BrowsePage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [sortBy, setSortBy] = useState("default")
   const [priceRange, setPriceRange] = useState([0, 1000])
@@ -22,6 +24,9 @@ export default function BrowsePage() {
   const [showFeatured, setShowFeatured] = useState(false)
   const [showNewArrivals, setShowNewArrivals] = useState(false)
   const [showSale, setShowSale] = useState(false)
+  const [serverProducts, setServerProducts] = useState<any[]>([])
+  const [allCategories, setAllCategories] = useState<string[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(true)
 
   // Unified handler for special filters and categories from URL
   useEffect(() => {
@@ -38,8 +43,49 @@ export default function BrowsePage() {
     setShowSale(sale === "true")
   }, [searchParams])
 
+  useClientEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true)
+        const [prodRes, catRes] = await Promise.all([
+          fetch('/public/api/products.php'),
+          fetch('/public/api/categories.php'),
+        ])
+        const prodJson = await prodRes.json()
+        const catJson = await catRes.json()
+        if (prodRes.ok) {
+          const mapped = (prodJson.data || []).map((p: any) => ({
+            id: String(p.id),
+            name: p.name,
+            price: Number(p.price),
+            originalPrice: p.original_price !== null ? Number(p.original_price) : undefined,
+            image: p.thumbnail || "/placeholder.svg?height=300&width=300",
+            category: p.category_name || 'Other',
+            rating: p.average_rating ? Number(p.average_rating) : 0,
+            reviews: p.review_count ? Number(p.review_count) : 0,
+            featured: Boolean(p.is_featured),
+            sale: Boolean(p.is_on_sale),
+            newArrival: Boolean(p.is_new_arrival),
+          }))
+          setServerProducts(mapped)
+        }
+        if (catRes.ok) {
+          const cats = (catJson.data || [])
+            .filter((c: any) => c.status === 'active')
+            .map((c: any) => c.name)
+          setAllCategories(cats)
+        }
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
   const filteredAndSortedProducts = useMemo(() => {
-    let filtered = products
+    let filtered = serverProducts
 
     // Apply search filter
     if (searchTerm) {
@@ -68,7 +114,20 @@ export default function BrowsePage() {
 
     // Apply sorting
     return sortProducts(filtered, sortBy)
-  }, [searchTerm, selectedCategories, showFeatured, showNewArrivals, showSale, priceRange, minRating, sortBy])
+  }, [serverProducts, searchTerm, selectedCategories, showFeatured, showNewArrivals, showSale, priceRange, minRating, sortBy])
+
+  // Pagination (20 per page)
+  const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1'))
+  const pageSize = 12
+  const totalPages = Math.max(1, Math.ceil(filteredAndSortedProducts.length / pageSize))
+  const pageStart = (currentPage - 1) * pageSize
+  const visibleProducts = filteredAndSortedProducts.slice(pageStart, pageStart + pageSize)
+
+  const goToPage = (p: number) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('page', String(p))
+    router.push(`/browse?${params.toString()}`)
+  }
 
   const handleCategoryChange = (category: string, checked: boolean) => {
     if (checked) {
@@ -115,7 +174,7 @@ export default function BrowsePage() {
       <div>
         <h3 className="font-semibold mb-3">Categories</h3>
         <div className="space-y-2">
-          {categories.map((category) => (
+          {allCategories.map((category) => (
             <div key={category} className="flex items-center space-x-2">
               <Checkbox
                 id={category}
@@ -292,7 +351,7 @@ export default function BrowsePage() {
         {/* Products Grid */}
         <div className="flex-1">
           <div className="mb-4 text-sm text-gray-600">
-            Showing {filteredAndSortedProducts.length} of {products.length} products
+            {isLoading ? 'Loading products...' : `Showing ${visibleProducts.length} of ${filteredAndSortedProducts.length} products (Page ${currentPage}/${totalPages})`}
           </div>
 
           {filteredAndSortedProducts.length === 0 ? (
@@ -304,9 +363,40 @@ export default function BrowsePage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredAndSortedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+              {isLoading ? (
+                <div className="col-span-full text-center py-12">Loading...</div>
+              ) : (
+                visibleProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))
+              )}
+            </div>
+          )}
+          {/* Pagination */}
+          {!isLoading && totalPages > 1 && (
+            <div className="flex justify-center mt-8">
+              <div className="inline-flex items-center gap-1">
+                <Button variant="outline" className="bg-transparent" disabled={currentPage <= 1} onClick={() => goToPage(currentPage - 1)}>
+                  «
+                </Button>
+                {Array.from({ length: totalPages }).slice(0, 7).map((_, idx) => {
+                  const page = idx + 1
+                  if (page > totalPages) return null
+                  return (
+                    <Button key={page} variant={page === currentPage ? "default" : "outline"} className="bg-transparent" onClick={() => goToPage(page)}>
+                      {page}
+                    </Button>
+                  )
+                })}
+                {totalPages > 7 && (
+                  <Button variant="outline" className="bg-transparent" disabled>
+                    …
+                  </Button>
+                )}
+                <Button variant="outline" className="bg-transparent" disabled={currentPage >= totalPages} onClick={() => goToPage(currentPage + 1)}>
+                  »
+                </Button>
+              </div>
             </div>
           )}
         </div>

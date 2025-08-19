@@ -76,7 +76,7 @@ function LoginButton({ loading, onError, btnId }: { loading: boolean, onError: (
           } else {
             router.push("/");
           }
-        }, 800);
+        }, 1200);
       }
     } catch (err) {
       toast({

@@ -60,7 +60,7 @@ try {
         // GET /products.php or /products.php?id=1
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
         if ($id > 0) {
-            $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
+            $stmt = $pdo->prepare('SELECT p.*, c.name AS category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.id = ?');
             $stmt->execute([$id]);
             $product = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$product) {
@@ -72,8 +72,8 @@ try {
             respond(200, ['success' => true, 'data' => ['product' => $product, 'images' => $images]]);
         }
 
-        // list
-        $stmt = $pdo->query('SELECT id, name, price, original_price, stock, category_id, thumbnail, is_featured, is_on_sale, is_new_arrival, created_at FROM products ORDER BY id DESC');
+        // list with category name and rating fields
+        $stmt = $pdo->query('SELECT p.id, p.name, p.price, p.original_price, p.thumbnail, p.stock, p.is_featured, p.is_on_sale, p.is_new_arrival, p.average_rating, p.review_count, c.name AS category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.id DESC');
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         respond(200, ['success' => true, 'data' => $products]);
     }

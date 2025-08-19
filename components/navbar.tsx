@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useAuthStore } from "@/store/auth-store"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -18,6 +18,7 @@ export default function Navbar() {
   const [isProductsOpen, setIsProductsOpen] = useState(false)
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn)
   const login = useAuthStore((state) => state.login)
+  const [cartCount, setCartCount] = useState<number>(0)
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       const userStr = localStorage.getItem("user")
@@ -31,6 +32,33 @@ export default function Navbar() {
       }
     }
   }, [login])
+
+  useEffect(() => {
+    const fetchCartCount = async () => {
+      try {
+        const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null
+        const user = userStr ? JSON.parse(userStr) : null
+        if (!user?.id) { setCartCount(0); return }
+        const res = await fetch(`/public/api/cart.php?user_id=${encodeURIComponent(user.id)}`)
+        const data = await res.json()
+        if (res.ok) setCartCount((data.data || []).reduce((sum: number, it: any) => sum + (it.quantity || 0), 0))
+        else setCartCount(0)
+      } catch {
+        setCartCount(0)
+      }
+    }
+    fetchCartCount()
+
+    const handler = () => fetchCartCount()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('cart:refresh', handler as EventListener)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('cart:refresh', handler as EventListener)
+      }
+    }
+  }, [])
   const productCategories = [
     {
       title: "PC Handheld",
@@ -226,9 +254,11 @@ export default function Navbar() {
               className="relative border-primary/20 text-primary hover:bg-primary/10 bg-transparent h-9 w-9"
             >
               <ShoppingCart className="h-4 w-4" />
-              {/* <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 text-xs text-white flex items-center justify-center">
-                2
-              </span> */}
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 text-xs text-white flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
               <span className="sr-only">Shopping cart</span>
             </Button>
           </ScrollableLink>

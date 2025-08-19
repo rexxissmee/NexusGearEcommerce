@@ -1,34 +1,84 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Minus, Plus, Trash2 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
-import { products } from "@/lib/products"
+import { useToast } from "@/hooks/use-toast"
 
 export default function CartPage() {
-  // Sample cart items based on our products
-  const [cartItems, setCartItems] = useState([
-    { ...products[0], quantity: 1 },
-    { ...products[2], quantity: 2 },
-  ])
+  const { toast } = useToast()
+  const [cartItems, setCartItems] = useState<any[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const user = (typeof window !== 'undefined') ? JSON.parse(localStorage.getItem('user') || 'null') : null
 
-  const updateQuantity = (id: string, newQuantity: number) => {
-    if (newQuantity < 1) return
-    setCartItems(cartItems.map((item) => (item.id === id ? { ...item, quantity: newQuantity } : item)))
+  const fetchCart = async () => {
+    try {
+      if (!user?.id) {
+        setCartItems([])
+        setLoading(false)
+        return
+      }
+      setLoading(true)
+      const res = await fetch(`/public/api/cart.php?user_id=${encodeURIComponent(user.id)}`)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error?.[0] || data?.error || 'Load cart failed')
+      setCartItems(data.data || [])
+    } catch (e: any) {
+      toast({ title: 'Load Failed', description: e?.message || 'Unable to load cart.', variant: 'destructive', className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4' })
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const removeItem = (id: string) => {
-    setCartItems(cartItems.filter((item) => item.id !== id))
+  useEffect(() => {
+    fetchCart()
+    const handler = () => fetchCart()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('cart:refresh', handler as EventListener)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('cart:refresh', handler as EventListener)
+      }
+    }
+  }, [])
+
+  const updateQuantity = async (cart_item_id: number, newQuantity: number) => {
+    try {
+      if (!user?.id) return
+      if (newQuantity < 1) return
+      const res = await fetch('/public/api/cart.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update', user_id: Number(user.id), cart_item_id, quantity: newQuantity }) })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error?.[0] || data?.error || 'Update failed')
+      setCartItems(prev => prev.map(it => it.cart_item_id === cart_item_id ? { ...it, quantity: newQuantity } : it))
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event('cart:refresh'))
+    } catch (e: any) {
+      toast({ title: 'Failed', description: e?.message || 'Unable to update cart.', variant: 'destructive', className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4' })
+    }
   }
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const removeItem = async (cart_item_id: number) => {
+    try {
+      if (!user?.id) return
+      const res = await fetch('/public/api/cart.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remove', user_id: Number(user.id), cart_item_id }) })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error?.[0] || data?.error || 'Remove failed')
+      setCartItems(prev => prev.filter(it => it.cart_item_id !== cart_item_id))
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event('cart:refresh'))
+      toast({ title: 'Removed', description: 'Item removed from cart.', className: 'bg-green-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4' })
+    } catch (e: any) {
+      toast({ title: 'Failed', description: e?.message || 'Unable to remove item.', variant: 'destructive', className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4' })
+    }
+  }
+
+  const subtotal = useMemo(() => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0), [cartItems])
   const shipping = 15
   const total = subtotal + shipping
 
-  if (cartItems.length === 0) {
+  if (!loading && cartItems.length === 0) {
     return (
       <main className="flex-1 container px-4 py-16 mx-auto">
         <h1 className="text-3xl font-bold mb-8">Your Cart</h1>
@@ -58,8 +108,10 @@ export default function CartPage() {
               <div className="col-span-2 text-right">Total</div>
             </div>
 
-            {cartItems.map((item, index) => (
-              <div key={item.id} className="py-4 lg:py-6">
+            {loading ? (
+              <div className="py-8 text-center text-slate-500">Loading cart...</div>
+            ) : cartItems.map((item, index) => (
+              <div key={item.cart_item_id ?? item.id} className="py-4 lg:py-6">
                 {/* Mobile Layout */}
                 <div className="lg:hidden space-y-4">
                   <div className="flex items-start space-x-4">
@@ -75,7 +127,7 @@ export default function CartPage() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-gray-400 hover:text-red-500 flex-shrink-0"
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => removeItem(item.cart_item_id ?? item.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                       <span className="sr-only">Remove item</span>
@@ -88,7 +140,7 @@ export default function CartPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 rounded-none rounded-l-md hover:bg-gray-100"
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        onClick={() => updateQuantity(item.cart_item_id ?? item.id, item.quantity - 1)}
                       >
                         <Minus className="h-3 w-3" />
                         <span className="sr-only">Decrease quantity</span>
@@ -100,7 +152,7 @@ export default function CartPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 rounded-none rounded-r-md hover:bg-gray-100"
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.cart_item_id ?? item.id, item.quantity + 1)}
                       >
                         <Plus className="h-3 w-3" />
                         <span className="sr-only">Increase quantity</span>
@@ -134,7 +186,7 @@ export default function CartPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 rounded-none rounded-l-md hover:bg-gray-100"
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        onClick={() => updateQuantity(item.cart_item_id ?? item.id, item.quantity - 1)}
                       >
                         <Minus className="h-3 w-3" />
                         <span className="sr-only">Decrease quantity</span>
@@ -146,7 +198,7 @@ export default function CartPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 rounded-none rounded-r-md hover:bg-gray-100"
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.cart_item_id ?? item.id, item.quantity + 1)}
                       >
                         <Plus className="h-3 w-3" />
                         <span className="sr-only">Increase quantity</span>
@@ -163,7 +215,7 @@ export default function CartPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-gray-400 hover:text-red-500"
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => removeItem(item.cart_item_id ?? item.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                         <span className="sr-only">Remove item</span>
@@ -182,7 +234,19 @@ export default function CartPage() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setCartItems([])}
+                onClick={async () => {
+                  try {
+                    if (!user?.id) return
+                    const res = await fetch('/public/api/cart.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'clear', user_id: Number(user.id) }) })
+                    const data = await res.json()
+                    if (!res.ok) throw new Error(data?.error?.[0] || data?.error || 'Clear failed')
+                    setCartItems([])
+                    toast({ title: 'Cleared', description: 'Your cart has been cleared.', className: 'bg-green-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4' })
+                    if (typeof window !== 'undefined') window.dispatchEvent(new Event('cart:refresh'))
+                  } catch (e: any) {
+                    toast({ title: 'Failed', description: e?.message || 'Unable to clear cart.', variant: 'destructive', className: 'bg-red-600 text-white border-none shadow-xl rounded-lg font-semibold text-base px-6 py-4' })
+                  }
+                }}
                 className="order-1 sm:order-2 text-red-600 border-red-200 hover:bg-red-50"
               >
                 Clear Cart
