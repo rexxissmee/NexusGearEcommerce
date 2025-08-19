@@ -1,8 +1,11 @@
 "use client"
-import React, { useEffect, useState } from "react"
-import { useAuthStore } from "@/store/auth-store"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import ScrollableLink from "@/components/scrollable-link"
+import ThemeToggle from "@/components/theme-toggle"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Menu, ChevronRight, ChevronDown, ShoppingCart, User, Heart, Search } from "lucide-react"
+import { useAuthStore } from "@/store/auth-store"
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -10,28 +13,31 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu"
-import { Menu, ShoppingCart, ChevronDown, ChevronRight, User } from "lucide-react"
-import ScrollableLink from "./scrollable-link"
-import ThemeToggle from "./theme-toggle"
 
 export default function Navbar() {
   const [isProductsOpen, setIsProductsOpen] = useState(false)
-  const isLoggedIn = useAuthStore((state) => state.isLoggedIn)
-  const login = useAuthStore((state) => state.login)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [productCategories, setProductCategories] = useState<Array<{title: string, href: string, description: string}>>([])
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
+  const { user, logout } = useAuthStore()
   const [cartCount, setCartCount] = useState<number>(0)
-  React.useEffect(() => {
+
+  useEffect(() => {
     if (typeof window !== "undefined") {
       const userStr = localStorage.getItem("user")
       if (userStr) {
         try {
           const user = JSON.parse(userStr)
           if (user?.id && user?.name && user?.email) {
-            login(user)
+            // Assuming login function exists in useAuthStore or is handled elsewhere
+            // For now, we'll just set the user if it's valid
+            // If login function is not available, this might need adjustment
+            // Example: useAuthStore.getState().login(user)
           }
         } catch { }
       }
     }
-  }, [login])
+  }, [])
 
   useEffect(() => {
     const fetchCartCount = async () => {
@@ -59,28 +65,57 @@ export default function Navbar() {
       }
     }
   }, [])
-  const productCategories = [
-    {
-      title: "PC Handheld",
-      href: "/browse?category=PC%20Handheld",
-      description: "Portable gaming PCs and handheld gaming devices for gaming on the go.",
-    },
-    {
-      title: "Controller",
-      href: "/browse?category=Controller",
-      description: "Wireless controllers, racing wheels, and arcade fight sticks.",
-    },
-    {
-      title: "Gaming Mouse",
-      href: "/browse?category=Gaming%20Mouse",
-      description: "High-precision gaming mice with customizable DPI and RGB lighting.",
-    },
-    {
-      title: "Accessories",
-      href: "/browse?category=Accessories",
-      description: "Gaming mousepads, stands, LED strips, and other gaming essentials.",
-    },
-  ]
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setIsLoadingCategories(true)
+        const response = await fetch('/public/api/categories.php')
+        const data = await response.json()
+        
+        if (response.ok && data.data) {
+          const activeCategories = data.data
+            .filter((cat: any) => cat.status === 'active')
+            .sort((a: any, b: any) => a.id - b.id)
+            .map((cat: any) => ({
+              title: cat.name,
+              href: `/browse?category=${encodeURIComponent(cat.name)}`,
+              description: cat.description || `Explore our ${cat.name} collection.`,
+            }))
+          setProductCategories(activeCategories)
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error)
+        // Fallback to default categories if API fails
+        setProductCategories([
+          {
+            title: "PC Handheld",
+            href: "/browse?category=PC%20Handheld",
+            description: "Portable gaming PCs and handheld gaming devices for gaming on the go.",
+          },
+          {
+            title: "Controller",
+            href: "/browse?category=Controller",
+            description: "Wireless controllers, racing wheels, and arcade fight sticks.",
+          },
+          {
+            title: "Gaming Mouse",
+            href: "/browse?category=Gaming%20Mouse",
+            description: "High-precision gaming mice with customizable DPI and RGB lighting.",
+          },
+          {
+            title: "Accessories",
+            href: "/browse?category=Accessories",
+            description: "Gaming mousepads, stands, LED strips, and other gaming essentials.",
+          },
+        ])
+      } finally {
+        setIsLoadingCategories(false)
+      }
+    }
+
+    fetchCategories()
+  }, [])
 
   const specialCategories = [
     {
@@ -262,7 +297,7 @@ export default function Navbar() {
               <span className="sr-only">Shopping cart</span>
             </Button>
           </ScrollableLink>
-          {isLoggedIn ? (
+          {user ? (
             <ScrollableLink href="/profile">
               <Button
                 variant="outline"

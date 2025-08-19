@@ -57,7 +57,6 @@ try {
     ensure_upload_dir($uploadDir);
 
     if ($method === 'GET') {
-        // GET /products.php or /products.php?id=1
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
         if ($id > 0) {
             $stmt = $pdo->prepare('SELECT p.*, c.name AS category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.id = ?');
@@ -72,7 +71,6 @@ try {
             respond(200, ['success' => true, 'data' => ['product' => $product, 'images' => $images]]);
         }
 
-        // list with category name and rating fields
         $stmt = $pdo->query('SELECT p.id, p.name, p.price, p.original_price, p.thumbnail, p.stock, p.is_featured, p.is_on_sale, p.is_new_arrival, p.average_rating, p.review_count, c.name AS category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.id DESC');
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         respond(200, ['success' => true, 'data' => $products]);
@@ -97,7 +95,7 @@ try {
             if ($price === null) $errors[] = 'Price is required.';
             if ($errors) respond(400, ['error' => $errors]);
 
-            // handle thumbnail (optional but recommended)
+            // thumbnail
             $thumbnailPath = null;
             if (isset($_FILES['thumbnail'])) {
                 $thumb = save_uploaded_file($_FILES['thumbnail'], $uploadDir);

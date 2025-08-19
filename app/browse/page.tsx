@@ -28,7 +28,6 @@ export default function BrowsePage() {
   const [allCategories, setAllCategories] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
-  // Unified handler for special filters and categories from URL
   useEffect(() => {
     const category = searchParams.get("category")
     const featured = searchParams.get("featured")
@@ -72,6 +71,7 @@ export default function BrowsePage() {
         if (catRes.ok) {
           const cats = (catJson.data || [])
             .filter((c: any) => c.status === 'active')
+            .sort((a: any, b: any) => a.id - b.id)
             .map((c: any) => c.name)
           setAllCategories(cats)
         }
@@ -116,7 +116,7 @@ export default function BrowsePage() {
     return sortProducts(filtered, sortBy)
   }, [serverProducts, searchTerm, selectedCategories, showFeatured, showNewArrivals, showSale, priceRange, minRating, sortBy])
 
-  // Pagination (20 per page)
+  // Pagination (12 per page)
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1'))
   const pageSize = 12
   const totalPages = Math.max(1, Math.ceil(filteredAndSortedProducts.length / pageSize))

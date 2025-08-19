@@ -6,7 +6,6 @@ export default function Footer() {
     <footer className="bg-gray-50 dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 mt-auto">
       <div className="container px-4 py-12 mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Brand + Slogan (1 phần) */}
           <div className="md:col-span-1 space-y-4 flex flex-col h-full justify-between">
             <div>
               <ScrollableLink href="/" className="flex items-center gap-2 font-bold text-xl">
@@ -24,7 +23,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Anchor links (2 phần) */}
           <div className="md:col-span-2 grid grid-cols-2 md:grid-cols-3 gap-8">
             {/* Products */}
             <div className="space-y-4">

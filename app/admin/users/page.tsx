@@ -51,7 +51,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 
-// No mock data; show loading until API returns
+
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('')
