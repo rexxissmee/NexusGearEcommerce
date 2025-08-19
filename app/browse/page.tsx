@@ -18,7 +18,7 @@ export default function BrowsePage() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [sortBy, setSortBy] = useState("default")
-  const [priceRange, setPriceRange] = useState([0, 1000])
+  const [priceRange, setPriceRange] = useState([0, 2000])
   const [minRating, setMinRating] = useState(0)
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [showFeatured, setShowFeatured] = useState(false)
@@ -142,7 +142,7 @@ export default function BrowsePage() {
     setShowFeatured(false)
     setShowNewArrivals(false)
     setShowSale(false)
-    setPriceRange([0, 1000])
+    setPriceRange([0, 2000])
     setMinRating(0)
     setSearchTerm("")
     setSortBy("default")
@@ -215,7 +215,7 @@ export default function BrowsePage() {
       <div>
         <h3 className="font-semibold mb-3">Price Range</h3>
         <div className="px-2">
-          <Slider value={priceRange} onValueChange={setPriceRange} max={1000} min={0} step={10} className="w-full" />
+          <Slider value={priceRange} onValueChange={setPriceRange} max={2000} min={0} step={50} className="w-full" />
           <div className="flex justify-between text-sm text-gray-500 mt-2">
             <span>${priceRange[0]}</span>
             <span>${priceRange[1]}</span>
@@ -376,24 +376,39 @@ export default function BrowsePage() {
           {!isLoading && totalPages > 1 && (
             <div className="flex justify-center mt-8">
               <div className="inline-flex items-center gap-1">
-                <Button variant="outline" className="bg-transparent" disabled={currentPage <= 1} onClick={() => goToPage(currentPage - 1)}>
+                <Button 
+                  variant="outline" 
+                  className="border-primary/20 text-primary hover:bg-primary/10 bg-transparent h-9 w-9" 
+                  disabled={currentPage <= 1} 
+                  onClick={() => goToPage(currentPage - 1)}
+                >
                   «
                 </Button>
                 {Array.from({ length: totalPages }).slice(0, 7).map((_, idx) => {
                   const page = idx + 1
                   if (page > totalPages) return null
                   return (
-                    <Button key={page} variant={page === currentPage ? "default" : "outline"} className="bg-transparent" onClick={() => goToPage(page)}>
+                    <Button 
+                      key={page} 
+                      variant={page === currentPage ? "default" : "outline"} 
+                      className={page === currentPage ? "bg-primary text-white hover:bg-primary/90" : "border-primary/20 text-primary hover:bg-primary/10 bg-transparent h-9 w-9"} 
+                      onClick={() => goToPage(page)}
+                    >
                       {page}
                     </Button>
                   )
                 })}
                 {totalPages > 7 && (
-                  <Button variant="outline" className="bg-transparent" disabled>
+                  <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/10 bg-transparent h-9 w-9" disabled>
                     …
                   </Button>
                 )}
-                <Button variant="outline" className="bg-transparent" disabled={currentPage >= totalPages} onClick={() => goToPage(currentPage + 1)}>
+                <Button 
+                  variant="outline" 
+                  className="border-primary/20 text-primary hover:bg-primary/10 bg-transparent h-9 w-9" 
+                  disabled={currentPage >= totalPages} 
+                  onClick={() => goToPage(currentPage + 1)}
+                >
                   »
                 </Button>
               </div>

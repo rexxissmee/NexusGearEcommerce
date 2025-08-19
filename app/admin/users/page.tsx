@@ -51,8 +51,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 
-
-
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')

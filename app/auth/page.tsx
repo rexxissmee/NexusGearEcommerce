@@ -76,7 +76,7 @@ function LoginButton({ loading, onError, btnId }: { loading: boolean, onError: (
           } else {
             router.push("/");
           }
-        }, 1200);
+        }, 800);
       }
     } catch (err) {
       toast({
@@ -184,7 +184,7 @@ export default function AuthPage() {
             const loginTab = document.querySelector('[data-value="login"]');
             if (loginTab) (loginTab as HTMLElement).click();
             window.location.href = "/auth";
-          }, 1200);
+          }, 800);
         }
       } catch (err) {
         toast({
